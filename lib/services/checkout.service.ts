@@ -4,7 +4,7 @@
  * Ongkir: kota sama 9.000, sesama Jawa 15.000, lainnya 32.000; ekspres +12.000.
  * TODO(Supabase): placeOrder → route handler POST /api/orders (lockStock + insert orders) lalu PaymentService.createCharge.
  */
-import { BANKS, JAWA, TODAY, WALLETS } from '@/lib/data';
+import { BANKS, CITIES, JAWA, TODAY, WALLETS } from '@/lib/data';
 import { dbPatch } from '@/lib/store/db';
 import { addressSchema, fieldErrors } from '@/lib/validation';
 import { delay } from './util';
@@ -15,6 +15,9 @@ import type { CheckoutForm, Order, PayMethod, ShipOption } from '@/types/order';
 import type { Payment } from '@/types/payment';
 
 export { BANKS, WALLETS };
+
+/** Pilihan kota di form alamat checkout (urut abjad seperti prototipe). */
+export const CHECKOUT_CITIES: string[] = [...CITIES].sort();
 
 export function shipOptions(from: string, to: string): ShipOption[] {
   const same = from === to;

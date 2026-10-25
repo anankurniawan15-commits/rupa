@@ -1,5 +1,8 @@
+import { Suspense } from 'react';
+import { WishlistPage } from '@/components/wishlist/WishlistPage';
+
 export const metadata = { title: 'Wishlist' };
 
 export default function Page() {
-  return <div className="page wrap"><h1 className="h1">Wishlist</h1></div>;
+  return <Suspense fallback={null}><WishlistPage /></Suspense>;
 }

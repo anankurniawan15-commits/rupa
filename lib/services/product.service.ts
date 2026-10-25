@@ -6,6 +6,7 @@
  */
 import { useMemo } from 'react';
 import { CATEGORIES, CONDITIONS, MATERIALS, PRODUCTS, REVIEWS, SELLERS } from '@/lib/data';
+import { HOME } from '@/lib/data/home';
 import { useDb, dbPatch, db } from '@/lib/store/db';
 import type { CategoryKey, ConditionKey, Listing, ListingStatus, MaterialKey, PriceFilter, Product, ProductFilter, SortKey } from '@/types/product';
 
@@ -142,3 +143,17 @@ export function relatedProducts(p: Product, catalog: Product[]) {
     .filter((x, i, a) => a.indexOf(x) === i)
     .slice(0, 4);
 }
+
+/* ---------- tambahan untuk Beranda & Jelajahi ---------- */
+
+/** Konten editorial Beranda (hero, cerita utama, minat, tile material, cerita transformasi). */
+export const homeContent = () => HOME;
+
+/** Daftar kota penjual (urut abjad) untuk filter "Lokasi penjual". */
+export const SELLER_CITIES: string[] = Object.values(SELLERS)
+  .map((s) => s.city)
+  .filter((c, i, a) => a.indexOf(c) === i)
+  .sort((a, b) => a.localeCompare(b, 'id'));
+
+/** Opsi radio harga di panel filter (termasuk "Semua harga"). */
+export const PRICE_OPTIONS: [PriceFilter, string][] = [['', 'Semua harga'], ['lt100', PRICE_LABEL.lt100], ['100-200', PRICE_LABEL['100-200']], ['gt200', PRICE_LABEL.gt200]];

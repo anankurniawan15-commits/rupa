@@ -3,7 +3,7 @@
  * SortirService — AI Sortir (simulasi). Foto sungguhan tidak dianalisis di versi ini.
  * TODO(Groq): analyze(image) → lib/clients/groq.ts vision(image, prompt) lalu dipetakan ke SortirScenario.
  */
-import { SELLERS, SORTIR_SAMPLES } from '@/lib/data';
+import { PRODUCTS, SELLERS, SORTIR_SAMPLES } from '@/lib/data';
 import { useSortir } from '@/lib/store/sortir';
 import { analyzeSource, orderedActions, scenario } from '@/lib/ai/sortir-engine';
 import { delay } from './util';
@@ -29,6 +29,8 @@ export const sortirService = {
   generateIdeas: (k: ScenarioKey, _action: ActionKey | null) => scenario(k).ideas,
   findCreators: (k: ScenarioKey) => scenario(k).creators.map((id) => SELLERS[id]),
   getScenario: scenario,
+  /** Produk jadi dari material serupa (langkah 5). */
+  findSimilar: (k: ScenarioKey) => scenario(k).similar.map((id) => PRODUCTS.find((p) => p.id === id)).filter((p): p is NonNullable<typeof p> => !!p),
 
   /** Simpan hasil (tanpa foto) ke profil. */
   async save(title: string, scen: ScenarioKey): Promise<void> {

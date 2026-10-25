@@ -1,5 +1,8 @@
+import { Suspense } from 'react';
+import { ForgotPasswordForm } from '@/components/auth/ForgotPasswordForm';
+
 export const metadata = { title: 'Lupa kata sandi' };
 
 export default function Page() {
-  return <div className="page wrap"><h1 className="h1">Lupa kata sandi</h1></div>;
+  return <Suspense fallback={null}><ForgotPasswordForm /></Suspense>;
 }

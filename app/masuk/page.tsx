@@ -1,5 +1,8 @@
+import { Suspense } from 'react';
+import { LoginForm } from '@/components/auth/LoginForm';
+
 export const metadata = { title: 'Masuk' };
 
 export default function Page() {
-  return <div className="page wrap"><h1 className="h1">Masuk</h1></div>;
+  return <Suspense fallback={null}><LoginForm /></Suspense>;
 }

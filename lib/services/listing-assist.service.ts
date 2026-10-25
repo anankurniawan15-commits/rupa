@@ -13,6 +13,13 @@ import type { Listing, ListingDraft } from '@/types/product';
 
 export { SELL_CATEGORIES, SELL_CONDS, SELL_SHIPS, SELL_STEPS, PROC_TIMES, CITIES, sellInit, calcPrice, stepErrors, AI_TIPS };
 
+/** Foto contoh tombol "Gunakan foto contoh (prototipe)". */
+export const SAMPLE_PHOTOS: { url: string }[] = [{ url: '/products/tote-saku-denim.jpg' }, { url: '/products/tote-saku-denim-detail.jpg' }];
+/** Tarif per jam bawaan kalkulator harga (prototipe). */
+export const CALC_RATE_DEFAULT = '20000';
+export const MAX_PHOTOS = 5;
+export const PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
 export const listingAssistService = {
   async suggestTitles(draft: string, matOrigin: string, tags: string[]) {
     await delay(1100);
@@ -35,7 +42,7 @@ export const listingAssistService = {
   async publish(form: ListingDraft, ownerId: string): Promise<Listing> {
     const base = { title: form.title.trim(), price: num(form.price), stock: num(form.stock), owner: ownerId, img: form.photos[0]?.url || null, ph: form.photos[0] ? null : ('textile' as const) };
     if (form.editId) {
-      await productService.update(form.editId, base);
+      await productService.update(form.editId, { ...base, status: 'aktif' });
       return { ...base, id: form.editId, status: 'aktif', views: 0 };
     }
     return productService.create(base);
@@ -47,6 +54,10 @@ export const listingAssistService = {
   },
   seedFromListing(l: Listing) {
     listingAssistService.seedDraft({ editId: l.id, title: l.title, draft: l.title, price: String(l.price), stock: String(Math.max(1, l.stock)), cat: 'Tas dan Dompet', matOrigin: 'Jeans bekas dan kanvas sisa', cond: 'baru', photos: l.img ? [{ url: l.img }] : [] });
+  },
+  /** Lihat draf titipan tanpa menghapusnya (aman untuk initializer useState di StrictMode). */
+  peekSeed(): ListingDraft | null {
+    return useSell.getState().seed;
   },
   takeSeed(): ListingDraft | null {
     const s = useSell.getState().seed;

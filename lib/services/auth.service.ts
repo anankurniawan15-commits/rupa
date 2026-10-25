@@ -24,6 +24,7 @@ import type { Account } from '@/types/user';
 
 /** Kata sandi di memori saja (akun baru & hasil reset). */
 const memPasswords = new Map<string, string>();
+let lastLogoutAt = 0;
 const passwordOf = (id: string) => memPasswords.get(id) ?? __DEMO_PASSWORDS[id];
 
 const findByEmail = (email: string) => db().accounts.find((a) => a.email.toLowerCase() === email.trim().toLowerCase());
@@ -31,6 +32,9 @@ const findByEmail = (email: string) => db().accounts.find((a) => a.email.toLower
 export const LOCKED_MSG = 'Terlalu banyak percobaan gagal. Coba lagi dalam 15 menit, atau atur ulang kata sandi.';
 export const OTP_TOO_MANY = 'Terlalu banyak percobaan. Kirim ulang kode untuk mencoba lagi.';
 export const MAX_ATTEMPTS = LOGIN_MAX_ATTEMPTS;
+export const EMAIL_TAKEN_MSG = 'Email ini sudah terdaftar. Masuk, atau atur ulang kata sandi jika lupa.';
+/** Kode OTP simulasi yang ditampilkan sebagai petunjuk di formulir verifikasi (seperti prototipe). */
+export const OTP_HINT_CODE = OTP_DEMO;
 export { maskEmail };
 
 export type LoginResult = { ok: true; account: Account } | { ok: false; error: string; attempts: number; locked?: boolean };
@@ -59,7 +63,13 @@ export const authService = {
   },
 
   logout() {
+    lastLogoutAt = Date.now();
     useSession.getState().setUser(null);
+  },
+
+  /** true sesaat setelah keluar — halaman berakun lalu ke beranda, bukan ke Masuk. */
+  justLoggedOut() {
+    return Date.now() - lastLogoutAt < 3000;
   },
 
   isEmailTaken(email: string) {
@@ -68,7 +78,7 @@ export const authService = {
 
   /** Kirim OTP pendaftaran (simulasi). Validasi formulir dilakukan dengan registerSchema. */
   async register(dto: { name: string; email: string; phone: string; pass: string }): Promise<{ ok: true } | { ok: false; field: 'email'; error: string }> {
-    if (findByEmail(dto.email)) return { ok: false, field: 'email', error: 'Email ini sudah terdaftar. Masuk, atau atur ulang kata sandi jika lupa.' };
+    if (findByEmail(dto.email)) return { ok: false, field: 'email', error: EMAIL_TAKEN_MSG };
     await delay(900);
     return { ok: true };
   },

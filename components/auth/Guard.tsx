@@ -2,7 +2,7 @@
 import { useEffect, type ReactNode } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useHydrated } from '@/lib/store';
-import { useCurrentUser } from '@/lib/services/auth.service';
+import { authService, useCurrentUser } from '@/lib/services/auth.service';
 import { toast } from '@/lib/store/toast';
 import { Skeleton } from '@/components/ui/Boxes';
 import type { Account } from '@/types/user';
@@ -40,7 +40,7 @@ export function Guard({ need, children, allowWithShop }: { need: Need; children:
 
   useEffect(() => {
     const here = pathname + (sp.toString() ? '?' + sp.toString() : '');
-    if (verdict === 'login') router.replace('/masuk?next=' + encodeURIComponent(here));
+    if (verdict === 'login') router.replace(authService.justLoggedOut() ? '/' : '/masuk?next=' + encodeURIComponent(here));
     if (verdict === 'notAdmin') { toast('Halaman ini khusus admin', { kind: 'warn' }); router.replace('/'); }
     if (verdict === 'admin') { toast('Akun admin tidak bisa berjualan. Masuk dengan akun pengguna.', { kind: 'warn' }); router.replace('/admin'); }
     if (verdict === 'noShop') { toast('Buka toko dulu untuk mulai berjualan — hanya tiga langkah', { kind: 'info' }); router.replace('/buka-toko'); }

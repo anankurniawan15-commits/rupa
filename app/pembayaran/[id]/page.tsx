@@ -1,11 +1,12 @@
 import { Suspense } from 'react';
+import { PaymentPage } from '@/components/payment/PaymentPage';
 
 export const metadata = { title: 'Pembayaran' };
 
 export default function Page({ params }: PageProps<'/pembayaran/[id]'>) {
   return (
     <Suspense fallback={null}>
-      {params.then(({ id }) => <div className="page wrap"><h1 className="h1">Pembayaran {id}</h1></div>)}
+      {params.then(({ id }) => <PaymentPage id={id} />)}
     </Suspense>
   );
 }

@@ -1,5 +1,8 @@
+import { Suspense } from 'react';
+import { HomePage } from '@/components/home/HomePage';
+
 export const metadata = { title: 'Beranda' };
 
 export default function Page() {
-  return <div className="page wrap"><h1 className="h1">Beranda</h1></div>;
+  return <Suspense fallback={null}><HomePage /></Suspense>;
 }

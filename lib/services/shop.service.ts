@@ -3,7 +3,7 @@
  * ShopService — buka toko (3 langkah). Toko baru berstatus "pending" sampai admin memverifikasi.
  * TODO(Supabase): tabel seller_profiles; nomor rekening dienkripsi di server.
  */
-import { SELLERS, SHOP_BANKS } from '@/lib/data';
+import { CITIES, SELLERS, SHOP_BANKS } from '@/lib/data';
 import { db, dbPatch } from '@/lib/store/db';
 import { bankSchema, fieldErrors, shopInfoSchema } from '@/lib/validation';
 import { delay } from './util';
@@ -11,6 +11,8 @@ import type { Account, SellerProfile } from '@/types/user';
 
 export { SHOP_BANKS };
 export const SHOP_STEPS = ['Info toko', 'Rekening', 'Persetujuan'];
+/** Kota asal pengiriman, urut abjad seperti prototipe. */
+export const SHOP_CITIES = [...CITIES].sort((a, b) => a.localeCompare(b, 'id'));
 
 export interface ShopForm { name: string; city: string; desc: string; bank: string; acct: string; holder: string; agree: boolean }
 export const shopInit = (): ShopForm => ({ name: '', city: '', desc: '', bank: '', acct: '', holder: '', agree: false });

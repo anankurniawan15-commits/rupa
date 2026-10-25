@@ -23,9 +23,9 @@ export const HOME = {
     { cat: 'aksesori', label: 'Aksesori dan Dekorasi', desc: 'Pot, panel dinding, pernak-pernik', ph: 'metal', img: null },
     { cat: 'lainnya', label: 'Material Lainnya', desc: 'Karet, ban dalam, campuran', ph: 'rubber', img: null },
   ] as { cat: CategoryKey; label: string; desc: string; ph: PlaceholderKind | null; img: string | null }[],
-  stories: [
+  stories: ([
     { pid: 'p3', ph: 'textile', before: 'Celana corduroy, kemeja flanel, dan perca motif yang tak terpakai', afterLabel: 'Sesudah', img: '/products/kulot-patchwork.jpg', alt: 'Kulot patchwork bintang', seller: 'Studio Tambal · Jakarta Selatan', title: 'Tiga pakaian, satu kulot', text: 'Nadya membongkar pakaian per panel lalu menyusunnya ulang. Bintang di kaki dijahit tangan dari perca sisa penjahit langganannya.' },
     { pid: 'p5', ph: 'textile', before: 'Dua jaket denim bekas — salah satunya sobek di punggung', afterLabel: 'Sesudah', img: '/products/jaket-denim-belah-dua.jpg', alt: 'Jaket denim dua tone', seller: 'Benang Kedua · Bandung', title: 'Dua jaket yang tak lagi utuh', text: 'Daripada menambal sobekan besar, Arief membelah kedua jaket di garis tengah dan menyatukan sisi yang masih kuat.' },
     { pid: 'p1', ph: 'textile', before: 'Celana jeans bekas donasi pelanggan, robek di lutut', afterLabel: 'Proses', img: '/products/tote-saku-denim.jpg', alt: 'Saku jeans disematkan ke tote kanvas', seller: 'Rumah Jahit Laras · Yogyakarta', title: 'Saku yang pindah rumah', text: 'Bu Laras memakai saku jeans yang masih bagus sebagai saku luar tote dari kanvas sisa konveksi tetangganya.' },
-  ],
+  ] as { pid: string; ph: PlaceholderKind; before: string; afterLabel: string; img: string; alt: string; seller: string; title: string; text: string }[]),
 };
