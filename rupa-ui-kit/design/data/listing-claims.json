@@ -1,0 +1,58 @@
+[
+  {
+    "pattern": "100\\s*%\\s*ramah lingkungan",
+    "flags": "i",
+    "phrase": "“100% ramah lingkungan”",
+    "why": "Klaim mutlak sulit dibuktikan. Sebutkan faktanya, misalnya “dibuat dari jeans bekas”.",
+    "generic": false
+  },
+  {
+    "pattern": "ramah lingkungan",
+    "flags": "i",
+    "phrase": "“ramah lingkungan”",
+    "why": "Terlalu umum. Jelaskan faktanya: material apa yang dipakai ulang dan bagaimana.",
+    "generic": true
+  },
+  {
+    "pattern": "bebas (bahan )?kimia",
+    "flags": "i",
+    "phrase": "“bebas bahan kimia”",
+    "why": "Semua material mengandung zat kimia, jadi klaim ini menyesatkan.",
+    "generic": false
+  },
+  {
+    "pattern": "tersertifikasi|bersertifikat|\\bsni\\b",
+    "flags": "i",
+    "phrase": "klaim sertifikasi",
+    "why": "Cantumkan nomor sertifikatnya, atau hapus klaim ini.",
+    "generic": false
+  },
+  {
+    "pattern": "zero waste|nol sampah|tanpa limbah",
+    "flags": "i",
+    "phrase": "“zero waste”",
+    "why": "Sulit dibuktikan untuk satu produk. Ceritakan sisa bahanmu dipakai untuk apa.",
+    "generic": false
+  },
+  {
+    "pattern": "anti ?bakteri",
+    "flags": "i",
+    "phrase": "“antibakteri”",
+    "why": "Klaim kesehatan perlu bukti uji laboratorium.",
+    "generic": false
+  },
+  {
+    "pattern": "selamatkan bumi|menyelamatkan (bumi|lingkungan)",
+    "flags": "i",
+    "phrase": "klaim dampak besar",
+    "why": "Dampak sebesar itu sulit diukur. Ceritakan proses dan bahanmu saja.",
+    "generic": false
+  },
+  {
+    "pattern": "\\[[^\\]]*\\]",
+    "flags": "",
+    "phrase": "teks dalam [ ]",
+    "why": "Masih ada bagian dalam tanda kurung siku yang perlu kamu isi.",
+    "generic": false
+  }
+]

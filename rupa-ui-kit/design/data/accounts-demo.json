@@ -1,0 +1,131 @@
+{
+  "note": "Akun demo untuk mock auth di frontend. Di produksi kata sandi tidak pernah disimpan atau dikirim ke klien; pakai Supabase Auth.",
+  "otpDemoCode": "123456",
+  "passwordRules": {
+    "minLength": 8,
+    "requireLetterAndDigit": true,
+    "recommended": [
+      "huruf besar dan kecil",
+      "simbol"
+    ]
+  },
+  "loginLock": {
+    "maxAttempts": 5,
+    "lockMinutes": 15
+  },
+  "accounts": [
+    {
+      "id": "dinda",
+      "name": "Dinda Pratiwi",
+      "email": "dinda@contoh.id",
+      "phone": "0812 3456 7890",
+      "pass": "rupa1234",
+      "role": "user",
+      "status": "aktif",
+      "joined": "Maret 2025",
+      "shop": {
+        "name": "Tambal Sulam Dinda",
+        "city": "Bandung",
+        "desc": "Pouch dan tote dari jeans bekas.",
+        "bank": "BCA",
+        "acct": "1234567890",
+        "holder": "Dinda Pratiwi",
+        "status": "verified",
+        "note": ""
+      }
+    },
+    {
+      "id": "admin",
+      "name": "Admin Rupa",
+      "email": "admin@rupa.id",
+      "phone": "",
+      "pass": "admin1234",
+      "role": "admin",
+      "status": "aktif",
+      "joined": "Januari 2025",
+      "shop": null
+    },
+    {
+      "id": "raka",
+      "name": "Raka Aditya",
+      "email": "raka@contoh.id",
+      "phone": "0813 2222 4421",
+      "pass": "raka1234",
+      "role": "user",
+      "status": "aktif",
+      "joined": "Oktober 2026",
+      "shop": {
+        "name": "Kayu Kedua Jepara",
+        "city": "Jepara",
+        "desc": "Rak dan bangku dari kusen bekas.",
+        "bank": "BRI",
+        "acct": "002101004421",
+        "holder": "Raka Aditya",
+        "status": "pending",
+        "note": ""
+      }
+    },
+    {
+      "id": "maya",
+      "name": "Maya Lestari",
+      "email": "maya@contoh.id",
+      "phone": "0857 1100 8812",
+      "pass": "maya1234",
+      "role": "user",
+      "status": "aktif",
+      "joined": "Oktober 2026",
+      "shop": {
+        "name": "Perca Maya",
+        "city": "Surabaya",
+        "desc": "Selimut dan taplak dari kain perca konveksi.",
+        "bank": "Mandiri",
+        "acct": "1420098812",
+        "holder": "CV Perca Nusantara",
+        "status": "pending",
+        "note": ""
+      }
+    },
+    {
+      "id": "nadya",
+      "name": "Nadya Putri",
+      "email": "nadya@studiotambal.id",
+      "phone": "0811 9000 5678",
+      "pass": "nadya1234",
+      "role": "user",
+      "status": "aktif",
+      "joined": "Mei 2025",
+      "shop": {
+        "name": "Studio Tambal",
+        "city": "Jakarta Selatan",
+        "desc": "Pakaian rekonstruksi dari perca.",
+        "bank": "BNI",
+        "acct": "0712345678",
+        "holder": "Nadya Putri",
+        "status": "verified",
+        "note": ""
+      }
+    },
+    {
+      "id": "ayu",
+      "name": "Ayu Kartika",
+      "email": "ayu@contoh.id",
+      "phone": "0821 3300 1122",
+      "pass": "ayu12345",
+      "role": "user",
+      "status": "aktif",
+      "joined": "Agustus 2026",
+      "shop": null
+    },
+    {
+      "id": "tono",
+      "name": "Tono Wijaya",
+      "email": "tono@contoh.id",
+      "phone": "0819 7777 0001",
+      "pass": "tono1234",
+      "role": "user",
+      "status": "diblokir",
+      "joined": "Juli 2026",
+      "shop": null
+    }
+  ]
+}

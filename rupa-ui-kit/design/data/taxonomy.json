@@ -1,0 +1,89 @@
+{
+  "categories": {
+    "tekstil": "Tekstil dan Pakaian",
+    "kayu": "Kayu dan Furnitur",
+    "plastik": "Plastik dan Kemasan",
+    "aksesori": "Aksesori dan Dekorasi",
+    "lainnya": "Material Lainnya"
+  },
+  "materials": {
+    "denim": "Denim",
+    "kain": "Kain dan perca",
+    "kayu": "Kayu",
+    "plastik": "Plastik",
+    "logam": "Logam",
+    "karet": "Karet"
+  },
+  "conditions": {
+    "baru": "Baru dibuat dari bahan bekas",
+    "rekon": "Bekas, direkonstruksi",
+    "bahan": "Bahan mentah"
+  },
+  "sellCategoryTypes": {
+    "Tas dan Dompet": [
+      "tas",
+      "dompet"
+    ],
+    "Pakaian": [
+      "celana",
+      "jaket"
+    ],
+    "Dekorasi Rumah": [
+      "lampu",
+      "dekorasi",
+      "pot"
+    ],
+    "Organizer dan Alat Tulis": [
+      "organizer"
+    ],
+    "Bahan dan Material": [
+      "bahan"
+    ],
+    "Aksesori": [],
+    "Furnitur": []
+  },
+  "sellConditions": [
+    [
+      "baru",
+      "Baru dibuat dari bahan bekas",
+      "Produk jadi hasil buatanmu"
+    ],
+    [
+      "rekon",
+      "Bekas, direkonstruksi",
+      "Barang bekas yang diubah bentuknya"
+    ],
+    [
+      "bekas",
+      "Bekas, layak pakai",
+      "Hanya diperbaiki atau dibersihkan"
+    ],
+    [
+      "bahan",
+      "Bahan mentah",
+      "Dijual untuk diolah orang lain"
+    ]
+  ],
+  "shippingOptions": [
+    [
+      "reg",
+      "Reguler",
+      "2–4 hari, untuk sebagian besar paket"
+    ],
+    [
+      "exp",
+      "Ekspres",
+      "1–2 hari, ongkir lebih tinggi"
+    ],
+    [
+      "cargo",
+      "Kargo",
+      "Untuk furnitur atau paket di atas 5 kg"
+    ],
+    [
+      "pickup",
+      "Ambil di tempat",
+      "Pembeli mengambil langsung di kotamu"
+    ]
+  ]
+}

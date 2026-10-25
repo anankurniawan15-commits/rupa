@@ -1,0 +1,62 @@
+{
+  "reports": [
+    {
+      "id": "RPT-0091",
+      "pid": "p7",
+      "reason": "Klaim lingkungan yang menyesatkan",
+      "reporter": "Pengguna #4821",
+      "date": "18 Okt 2026",
+      "detail": "Deskripsi menyebut “100% bebas mikroplastik” tanpa penjelasan proses.",
+      "status": "open"
+    },
+    {
+      "id": "RPT-0088",
+      "pid": "p9",
+      "reason": "Informasi material tidak sesuai",
+      "reporter": "Pengguna #3310",
+      "date": "16 Okt 2026",
+      "detail": "Foto ulasan menunjukkan papan baru, bukan kayu palet bekas.",
+      "status": "open"
+    },
+    {
+      "id": "RPT-0075",
+      "pid": "p2",
+      "reason": "Ajakan bertransaksi di luar Rupa",
+      "reporter": "Pengguna #1207",
+      "date": "9 Okt 2026",
+      "detail": "Nomor WhatsApp tercantum di foto kedua. Sudah dihapus penjual.",
+      "status": "dismissed"
+    }
+  ],
+  "disputes": [
+    {
+      "id": "DSP-0014",
+      "order": "UPL-2610-0371",
+      "buyer": "Galih R.",
+      "seller": "Benang Kedua",
+      "date": "17 Okt 2026",
+      "reason": "Barang rusak saat diterima",
+      "detail": "Kancing jaket lepas saat paket dibuka. Pembeli melampirkan 3 foto.",
+      "amount": 310000,
+      "status": "open",
+      "decision": ""
+    },
+    {
+      "id": "DSP-0011",
+      "order": "UPL-2610-0310",
+      "buyer": "Putri S.",
+      "seller": "Studio Tambal",
+      "date": "11 Okt 2026",
+      "reason": "Paket belum sampai melewati estimasi",
+      "detail": "Resi tidak bergerak selama 6 hari.",
+      "amount": 260000,
+      "status": "closed",
+      "decision": "Kembalikan dana penuh ke pembeli"
+    }
+  ],
+  "disputeDecisions": [
+    "Kembalikan dana penuh ke pembeli",
+    "Kembalikan 50% dana ke pembeli",
+    "Teruskan dana ke penjual"
+  ]
+}

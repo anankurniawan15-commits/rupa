@@ -1,0 +1,501 @@
+{
+  "knowledgeBase": {
+    "jeans": {
+      "role": "ai",
+      "kind": "guide",
+      "title": "Tiga ide dari celana jeans lama",
+      "paras": [
+        "Jeans termasuk bahan paling mudah di-upcycle karena tebal dan kuat. Bagian paling berguna: saku belakang, kampuh samping, dan bagian kaki yang belum menipis."
+      ],
+      "ideas": [
+        {
+          "name": "Tote saku jeans",
+          "meta": "Mudah · 2–3 jam · ± Rp20.000–Rp40.000",
+          "steps": [
+            "Lepas saku belakang dengan pendedel.",
+            "Potong kanvas sisa jadi dua panel 38 × 42 cm.",
+            "Jahit saku ke panel depan, satukan panel, pasang tali dengan jahitan kotak."
+          ]
+        },
+        {
+          "name": "Pouch ritsleting",
+          "meta": "Sedang · 1–2 jam · ± Rp10.000–Rp25.000",
+          "steps": [
+            "Potong dua panel 22 × 14 cm dari bagian kaki.",
+            "Jahit ritsleting bersama furing.",
+            "Jahit keliling, balik, rapikan sudut."
+          ]
+        },
+        {
+          "name": "Bahan patchwork",
+          "meta": "Mudah · tanpa alat khusus",
+          "steps": [
+            "Potong kotak 10 × 10 cm dari bagian yang masih kuat.",
+            "Kelompokkan per warna, dari terang ke gelap.",
+            "Simpan untuk proyek berikutnya atau jual sebagai bahan."
+          ]
+        }
+      ],
+      "safety": "Cuci dulu sebelum dipotong. Jeans yang mengandung elastan lebih melar — kurang cocok untuk tas yang menahan beban berat.",
+      "chips": [
+        "Bagaimana menentukan harga produk upcycle?",
+        "Ada produk berbahan denim bekas?"
+      ]
+    },
+    "botol": {
+      "role": "ai",
+      "kind": "guide",
+      "title": "Memanfaatkan botol plastik dengan aman",
+      "paras": [
+        "Botol plastik paling aman dipakai ulang untuk keperluan non-makanan. Kalau jumlahnya banyak, menyetor ke bank sampah sering jadi pilihan terbaik."
+      ],
+      "ideas": [
+        {
+          "name": "Pot semai gantung",
+          "meta": "Mudah · 30 menit",
+          "steps": [
+            "Potong botol sepertiga dari bawah.",
+            "Buat lubang drainase dengan hati-hati.",
+            "Isi media tanam dan gantung dengan tali."
+          ]
+        },
+        {
+          "name": "Sekat laci",
+          "meta": "Mudah · 20 menit",
+          "steps": [
+            "Potong bagian bawah botol setinggi 6 cm.",
+            "Haluskan tepinya dengan amplas.",
+            "Pakai untuk klip, karet, atau kabel kecil."
+          ]
+        },
+        {
+          "name": "Setor tutup ke kreator plastik",
+          "meta": "Mudah",
+          "steps": [
+            "Lepas tutup dan pisahkan per warna.",
+            "Cuci dan keringkan.",
+            "Cari kreator plastik cacah lewat AI Sortir."
+          ]
+        }
+      ],
+      "safety": "Jangan melelehkan atau membakar plastik di rumah — asapnya berbahaya. Botol sekali pakai sebaiknya tidak dipakai berulang untuk minuman.",
+      "chips": [
+        "Ada produk dari plastik daur ulang?",
+        {
+          "label": "Analisis botolku di AI Sortir",
+          "go": "sortir"
+        }
+      ]
+    },
+    "pensil": {
+      "role": "ai",
+      "kind": "guide",
+      "title": "Material yang cocok untuk tempat pensil",
+      "paras": [
+        "Pilihannya tergantung siapa pemakainya dan seberapa sering dibawa."
+      ],
+      "ideas": [
+        {
+          "name": "Denim atau kanvas bekas",
+          "meta": "Paling awet · perlu menjahit",
+          "steps": [
+            "Pilih bagian kain yang tidak menipis.",
+            "Ukuran 22 × 10 cm cukup untuk sekitar 15 pensil.",
+            "Tambahkan ritsleting atau tali serut."
+          ]
+        },
+        {
+          "name": "Kaleng bekas",
+          "meta": "Tanpa menjahit · kokoh di meja",
+          "steps": [
+            "Tekuk tepi kaleng ke dalam atau tutup dengan lakban kain.",
+            "Bersihkan karat dan sisa isinya.",
+            "Bungkus dengan kain sisa atau cat ulang."
+          ]
+        },
+        {
+          "name": "Tabung karton tebal",
+          "meta": "Paling mudah · kurang tahan air",
+          "steps": [
+            "Pakai tabung bekas gulungan kain atau poster.",
+            "Tutup salah satu ujung dengan karton bulat.",
+            "Lapisi kertas bekas atau kain agar lebih kuat."
+          ]
+        }
+      ],
+      "safety": "Untuk anak-anak, hindari kaleng dengan tepi logam yang terbuka.",
+      "chips": [
+        "Cari organizer meja di bawah Rp100.000"
+      ]
+    },
+    "harga": {
+      "role": "ai",
+      "kind": "text",
+      "paras": [
+        "Rumus yang umum dipakai kreator:",
+        "Harga = biaya bahan + (jam kerja × tarif per jam) + kemasan + margin 20–40%.",
+        "Contoh tote denim: bahan Rp25.000 + 3 jam × Rp20.000 + kemasan Rp5.000 = Rp90.000. Dengan margin 25%, sekitar Rp112.000.",
+        "Sebagai pembanding, tas dan dompet upcycle di katalog Rupa saat ini Rp65.000–Rp135.000 (data contoh). Itu bukan harga wajib — waktumu juga bernilai."
+      ],
+      "chips": [
+        {
+          "label": "Buka kalkulator harga di Jual Produk",
+          "go": "sell"
+        },
+        "Bagaimana membuat deskripsi produk yang menarik?"
+      ]
+    },
+    "deskripsi": {
+      "role": "ai",
+      "kind": "text",
+      "paras": [
+        "Deskripsi yang dipercaya pembeli biasanya menjawab lima hal:",
+        "1) Material asal — dari apa dan dari mana. 2) Proses — apa yang kamu ubah. 3) Kondisi yang jujur, termasuk cacat kecil. 4) Ukuran dan berat. 5) Cara merawat.",
+        "Contoh kalimat pembuka: “Saku belakang dari jeans bekas pelanggan, dijahit ulang ke kanvas sisa konveksi.”",
+        "Hindari klaim yang sulit dibuktikan seperti “100% ramah lingkungan” atau “bebas bahan kimia”. Fakta yang spesifik lebih meyakinkan."
+      ],
+      "chips": [
+        {
+          "label": "Buat listing dengan bantuan AI",
+          "go": "sell"
+        }
+      ]
+    },
+    "kayu": {
+      "role": "ai",
+      "kind": "guide",
+      "title": "Memanfaatkan kayu bekas",
+      "paras": [
+        "Kayu solid bekas furnitur biasanya masih kuat. Periksa dulu apakah ada bagian yang lapuk, berjamur, atau dimakan rayap."
+      ],
+      "ideas": [
+        {
+          "name": "Perbaiki dulu",
+          "meta": "Sedang · lem kayu dan klem",
+          "steps": [
+            "Isi retak dengan lem kayu.",
+            "Klem semalaman.",
+            "Ampelas dan finishing ulang."
+          ]
+        },
+        {
+          "name": "Rak dinding kecil",
+          "meta": "Sulit · perlu bor",
+          "steps": [
+            "Potong papan yang masih kuat.",
+            "Ampelas dan finishing minyak.",
+            "Pasang dengan fisher sesuai beban."
+          ]
+        },
+        {
+          "name": "Panel dekorasi",
+          "meta": "Sedang",
+          "steps": [
+            "Potong kayu jadi bilah.",
+            "Susun pola di papan dasar.",
+            "Lem dan pasang gantungan."
+          ]
+        }
+      ],
+      "safety": "Cat lama bisa mengandung timbal — pakai masker saat mengampelas. Kayu lapuk atau berjamur sebaiknya tidak dipakai di dalam rumah.",
+      "chips": [
+        {
+          "label": "Analisis kursiku di AI Sortir",
+          "go": "sortir"
+        }
+      ]
+    },
+    "kaleng": {
+      "role": "ai",
+      "kind": "guide",
+      "title": "Ide dari kaleng bekas",
+      "paras": [
+        "Kaleng kuat dan mudah dicat ulang, tapi tepinya perlu diamankan dulu."
+      ],
+      "ideas": [
+        {
+          "name": "Pot gantung",
+          "meta": "Mudah · 1 jam",
+          "steps": [
+            "Buat lubang drainase di dasar.",
+            "Tekuk tepi atas dan cat ulang.",
+            "Pasang tali atau kawat gantungan."
+          ]
+        },
+        {
+          "name": "Tempat alat tulis",
+          "meta": "Mudah · 30 menit",
+          "steps": [
+            "Tutup tepi dengan lakban kain.",
+            "Bungkus dengan kain sisa.",
+            "Gabungkan beberapa kaleng dengan lem tembak."
+          ]
+        }
+      ],
+      "safety": "Tepi kaleng tajam. Tekuk atau tutup sebelum dipakai, dan gunakan sarung tangan saat memotong.",
+      "chips": [
+        "Cari pot tanaman upcycle"
+      ]
+    },
+    "fallback": {
+      "role": "ai",
+      "kind": "clarify",
+      "paras": [
+        "Ceritakan sedikit tentang barangnya: terbuat dari apa, ukurannya, dan kondisinya.",
+        "Kalau ada fotonya, AI Sortir bisa membantu memperkirakan material lebih dulu."
+      ],
+      "chips": [
+        "Celana jeans lama",
+        "Botol plastik bekas",
+        {
+          "label": "Buka AI Sortir",
+          "go": "sortir"
+        }
+      ]
+    }
+  },
+  "materialPatterns": [
+    {
+      "pattern": "denim|jeans|jins",
+      "material": "denim"
+    },
+    {
+      "pattern": "kayu|jati|palet",
+      "material": "kayu"
+    },
+    {
+      "pattern": "plastik|botol",
+      "material": "plastik"
+    },
+    {
+      "pattern": "kain|perca|patchwork|flanel|corduroy",
+      "material": "kain"
+    },
+    {
+      "pattern": "kaleng|logam|besi",
+      "material": "logam"
+    },
+    {
+      "pattern": "karet|ban dalam",
+      "material": "karet"
+    }
+  ],
+  "typePatterns": [
+    {
+      "pattern": "\\btas\\b|tote",
+      "types": [
+        "tas"
+      ],
+      "word": "tas"
+    },
+    {
+      "pattern": "dompet",
+      "types": [
+        "dompet"
+      ],
+      "word": "dompet"
+    },
+    {
+      "pattern": "celana|kulot|kargo",
+      "types": [
+        "celana"
+      ],
+      "word": "celana"
+    },
+    {
+      "pattern": "jaket",
+      "types": [
+        "jaket"
+      ],
+      "word": "jaket"
+    },
+    {
+      "pattern": "lampu",
+      "types": [
+        "lampu"
+      ],
+      "word": "lampu"
+    },
+    {
+      "pattern": "dekorasi|hiasan|kamar|dinding|\\bpot\\b|rumah",
+      "types": [
+        "dekorasi",
+        "lampu",
+        "pot"
+      ],
+      "word": "dekorasi rumah"
+    },
+    {
+      "pattern": "organizer|alat tulis|pensil|meja kerja",
+      "types": [
+        "organizer"
+      ],
+      "word": "perlengkapan meja"
+    },
+    {
+      "pattern": "fashion|baju|pakaian|outfit|gaya",
+      "types": [
+        "tas",
+        "celana",
+        "jaket",
+        "dompet"
+      ],
+      "word": "fashion"
+    }
+  ],
+  "seedConversations": {
+    "new": {
+      "title": "Percakapan baru",
+      "sub": "",
+      "mode": "shop",
+      "msgs": []
+    },
+    "c1": {
+      "title": "Hadiah unik untuk teman",
+      "sub": "Belanja · 3 produk dibandingkan",
+      "mode": "shop",
+      "msgs": [
+        {
+          "role": "user",
+          "text": "Rekomendasikan hadiah unik untuk teman."
+        },
+        {
+          "role": "ai",
+          "kind": "clarify",
+          "paras": [
+            "Bisa! Supaya pilihannya pas: kira-kira budget-nya berapa, dan temanmu lebih suka barang fashion atau barang untuk kamar dan meja?"
+          ],
+          "chips": [
+            "Hadiah di bawah Rp100.000",
+            "Hadiah fashion di bawah Rp150.000",
+            "Hadiah untuk meja kerja"
+          ]
+        },
+        {
+          "role": "user",
+          "text": "Di bawah Rp150.000, dia suka fashion."
+        },
+        {
+          "role": "ai",
+          "kind": "products",
+          "paras": [
+            "Ini tiga pilihan fashion di bawah Rp150.000 yang cocok jadi hadiah. Aku memprioritaskan produk dengan cerita bahan yang jelas dan rating tinggi."
+          ],
+          "ids": [
+            "p1",
+            "p8",
+            "p2"
+          ],
+          "reasons": {
+            "p1": [
+              "Rp85.000 — masih di bawah Rp150.000",
+              "Saku asli dari jeans bekas, ada cerita bahannya",
+              "Rating 4,9 dari 38 ulasan"
+            ],
+            "p8": [
+              "Rp65.000 — pilihan paling hemat",
+              "Motif perca tiap dompet berbeda",
+              "Rating 4,8 dari 25 ulasan"
+            ],
+            "p2": [
+              "Rp135.000 — masih di bawah Rp150.000",
+              "Muat laptop 14 inci, praktis untuk kerja",
+              "Rating 4,8 dari 19 ulasan"
+            ]
+          }
+        },
+        {
+          "role": "user",
+          "text": "Bandingkan tiga produk ini."
+        },
+        {
+          "role": "ai",
+          "kind": "compare",
+          "ids": [
+            "p1",
+            "p8",
+            "p2"
+          ],
+          "paras": [
+            "Perbandingan dari data listing. Termurah: Dompet Patchwork Kain Sisa (Rp65.000). Rating tertinggi: Tote Kanvas Saku Denim (4,9).",
+            "Untuk hadiah harian, tote kanvas paling aman. Kalau temanmu sering membawa laptop, pilih tote panel denim."
+          ],
+          "chips": [
+            "Yang lebih murah",
+            "Ada pilihan lain?"
+          ]
+        }
+      ]
+    },
+    "c2": {
+      "title": "Ide dari jeans lama",
+      "sub": "Konsultasi upcycle",
+      "mode": "upcycle",
+      "msgs": [
+        {
+          "role": "user",
+          "text": "Apa yang bisa dibuat dari celana jeans lama?"
+        },
+        {
+          "role": "ai",
+          "kind": "guide",
+          "title": "Tiga ide dari celana jeans lama",
+          "paras": [
+            "Jeans termasuk bahan paling mudah di-upcycle karena tebal dan kuat. Bagian paling berguna: saku belakang, kampuh samping, dan bagian kaki yang belum menipis."
+          ],
+          "ideas": [
+            {
+              "name": "Tote saku jeans",
+              "meta": "Mudah · 2–3 jam · ± Rp20.000–Rp40.000",
+              "steps": [
+                "Lepas saku belakang dengan pendedel.",
+                "Potong kanvas sisa jadi dua panel 38 × 42 cm.",
+                "Jahit saku ke panel depan, satukan panel, pasang tali dengan jahitan kotak."
+              ]
+            },
+            {
+              "name": "Pouch ritsleting",
+              "meta": "Sedang · 1–2 jam · ± Rp10.000–Rp25.000",
+              "steps": [
+                "Potong dua panel 22 × 14 cm dari bagian kaki.",
+                "Jahit ritsleting bersama furing.",
+                "Jahit keliling, balik, rapikan sudut."
+              ]
+            },
+            {
+              "name": "Bahan patchwork",
+              "meta": "Mudah · tanpa alat khusus",
+              "steps": [
+                "Potong kotak 10 × 10 cm dari bagian yang masih kuat.",
+                "Kelompokkan per warna, dari terang ke gelap.",
+                "Simpan untuk proyek berikutnya atau jual sebagai bahan."
+              ]
+            }
+          ],
+          "safety": "Cuci dulu sebelum dipotong. Jeans yang mengandung elastan lebih melar — kurang cocok untuk tas yang menahan beban berat.",
+          "chips": [
+            "Bagaimana menentukan harga produk upcycle?",
+            "Ada produk berbahan denim bekas?"
+          ]
+        }
+      ]
+    },
+    "c3": {
+      "title": "Tas di bawah Rp150.000",
+      "sub": "Gagal dimuat — coba lagi",
+      "mode": "shop",
+      "msgs": [
+        {
+          "role": "user",
+          "text": "Cari tas upcycle di bawah Rp150.000."
+        },
+        {
+          "role": "ai",
+          "kind": "error",
+          "errText": "Jawaban gagal dimuat karena koneksi terputus. Pesanmu tetap tersimpan.",
+          "retryText": "Cari tas upcycle di bawah Rp150.000."
+        }
+      ]
+    }
+  }
+}

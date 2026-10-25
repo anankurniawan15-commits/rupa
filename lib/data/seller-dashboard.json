@@ -1,0 +1,141 @@
+{
+  "weeklyRevenue": [
+    [
+      "24 Agu",
+      320000
+    ],
+    [
+      "31 Agu",
+      410000
+    ],
+    [
+      "7 Sep",
+      280000
+    ],
+    [
+      "14 Sep",
+      505000
+    ],
+    [
+      "21 Sep",
+      460000
+    ],
+    [
+      "28 Sep",
+      390000
+    ],
+    [
+      "5 Okt",
+      610000
+    ],
+    [
+      "12 Okt",
+      540000
+    ]
+  ],
+  "listings": [
+    {
+      "id": "L1",
+      "title": "Pouch Saku Jeans",
+      "price": 55000,
+      "stock": 4,
+      "status": "aktif",
+      "views": 312,
+      "img": "/products/tote-saku-denim-detail.jpg"
+    },
+    {
+      "id": "L2",
+      "title": "Tote Kanvas Saku Jeans (krem)",
+      "price": 85000,
+      "stock": 1,
+      "status": "aktif",
+      "views": 528,
+      "img": "/products/tote-saku-denim.jpg"
+    },
+    {
+      "id": "L3",
+      "title": "Sarung Bantal Patchwork Denim",
+      "price": 120000,
+      "stock": 0,
+      "status": "habis",
+      "views": 201,
+      "ph": "textile"
+    },
+    {
+      "id": "L4",
+      "title": "Gantungan Kunci Perca",
+      "price": 15000,
+      "stock": 20,
+      "status": "dijeda",
+      "views": 88,
+      "ph": "textile"
+    },
+    {
+      "id": "L5",
+      "title": "Apron Denim untuk Bengkel",
+      "price": 140000,
+      "stock": 2,
+      "status": "draf",
+      "views": 0,
+      "ph": "textile"
+    }
+  ],
+  "sellerOrders": [
+    {
+      "id": "UPL-2610-0457",
+      "buyer": "Ayu K., Semarang",
+      "items": "Pouch Saku Jeans × 2",
+      "total": 110000,
+      "status": "baru",
+      "date": "Hari ini, 09.12"
+    },
+    {
+      "id": "UPL-2610-0449",
+      "buyer": "Galih, Depok",
+      "items": "Tote Kanvas Saku Jeans × 1",
+      "total": 85000,
+      "status": "dikemas",
+      "date": "Kemarin, 16.40"
+    },
+    {
+      "id": "UPL-2610-0431",
+      "buyer": "Putri, Medan",
+      "items": "Pouch Saku Jeans × 1",
+      "total": 55000,
+      "status": "dikirim",
+      "resi": "JX0098123ID",
+      "date": "16 Okt"
+    },
+    {
+      "id": "UPL-2610-0402",
+      "buyer": "Reza, Bandung",
+      "items": "Sarung Bantal Patchwork Denim × 1",
+      "total": 120000,
+      "status": "selesai",
+      "date": "12 Okt"
+    }
+  ],
+  "reviews": [
+    {
+      "n": "Galih",
+      "s": 5,
+      "t": "Pouch-nya rapi, ritsletingnya halus. Ukurannya pas untuk charger dan kabel.",
+      "p": "Pouch Saku Jeans",
+      "reply": ""
+    },
+    {
+      "n": "Putri",
+      "s": 4,
+      "t": "Bagus, tapi warnanya lebih gelap dari foto.",
+      "p": "Pouch Saku Jeans",
+      "reply": "Terima kasih masukannya, Kak. Foto akan kami perbarui dengan cahaya alami."
+    },
+    {
+      "n": "Reza",
+      "s": 5,
+      "t": "Bantalnya tebal dan jahitannya kuat. Ada catatan kecil soal asal kainnya, suka.",
+      "p": "Sarung Bantal Patchwork Denim",
+      "reply": ""
+    }
+  ]
+}
