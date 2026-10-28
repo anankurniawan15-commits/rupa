@@ -45,6 +45,13 @@ const asData = (v: unknown) => JSON.stringify(v).replace(/</g, '\\u003c');
 const historyBlock = (history: HistoryItem[]) =>
   history.length ? '<riwayat>' + asData(history.map((h) => ({ peran: h.role === 'user' ? 'pengguna' : 'asisten', teks: h.text }))) + '</riwayat>\n' : '';
 
+/**
+ * Key Groq ditolak (401/403) = salah konfigurasi. Tidak di-fallback diam-diam supaya terlihat
+ * sebagai pesan galat; galat lain (timeout, 429/5xx, JSON rusak) jatuh ke mesin aturan.
+ */
+export const isAuthError = (e: unknown) =>
+  e instanceof Error && e.name === 'GroqError' && 'status' in e && (e.status === 401 || e.status === 403);
+
 /** Panggil LLM lalu validasi JSON-nya; null untuk galat, timeout, atau keluaran tidak valid. */
 async function callJson<T>(deps: AssistantDeps, task: string, system: string, user: string, opts: ChatOptions, schema: z.ZodType<T>): Promise<T | null> {
   const budget = deps.remainingMs();
@@ -58,6 +65,7 @@ async function callJson<T>(deps: AssistantDeps, task: string, system: string, us
     if (parsed.success) return parsed.data;
     deps.log?.('llm_invalid', { task });
   } catch (e) {
+    if (isAuthError(e)) throw e;
     // GroqError hanya berisi jenis + status HTTP; galat lain tidak dicatat isinya.
     deps.log?.('llm_error', { task, error: e instanceof Error && e.name === 'GroqError' ? e.message : 'unexpected' });
   }
