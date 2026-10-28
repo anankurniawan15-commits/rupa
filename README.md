@@ -59,6 +59,7 @@ app/                      halaman (page.tsx = Server Component tipis + komponen 
   page.tsx                Beranda
   jelajahi/ produk/[id]/ sortir/ assistant/ jual/ dashboard/ keranjang/ checkout/ checkout/berhasil/
   pesanan/ profil/ wishlist/ masuk/ daftar/ lupa-sandi/ buka-toko/ pembayaran/[id]/ admin/
+  api/assistant/          route handler POST AI Assistant (Groq, server-only)
 proxy.ts                  gating rute (Next 16 = middleware)
 components/
   layout/                 Header, MobileDrawer, ProfileMenu, DemoBanner, Footer, BottomNav, AssistantLauncher
@@ -67,14 +68,16 @@ components/
   auth/ product/ home/ sortir/ assistant/ sell/ dashboard/ checkout/ payment/ orders/ profile/ shop/ admin/
   modals/                 ChatModal, ReasonModal, ReviewModal, TextModal (dipakai lintas halaman)
 lib/
-  clients/                supabase.ts, groq.ts, payment-gateway.ts  (STUB — belum dipakai)
+  clients/                groq.ts (chat() aktif; vision() STUB), supabase.ts, payment-gateway.ts (STUB)
   services/               satu-satunya akses data dari komponen (async + hook reaktif)
-  ai/                     assistant-engine.ts, sortir-engine.ts, listing-assist.ts (port dari prototipe)
+  ai/                     assistant-engine.ts, sortir-engine.ts, listing-assist.ts (port dari prototipe);
+                          assistant-llm.ts, assistant-prompts.ts, assistant-schema.ts (AI Assistant + Groq)
   data/                   JSON contoh dari rupa-ui-kit/design/data + konten editorial beranda
   store/                  Zustand: session, cart, wishlist, chat, sortir, sell, toast, db (database mock)
-  validation.ts format.ts
+  validation.ts format.ts rate-limit.ts
 types/                    user, product, order, payment, social, ai
 qa/                       skrip screenshot Playwright
+tests/assistant/          uji Playwright tanpa browser (unit/, api/) + kasus evaluasi
 rupa-ui-kit/              paket desain asli (acuan, tidak dipakai saat runtime)
 ```
 
