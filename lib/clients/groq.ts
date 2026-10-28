@@ -28,45 +28,64 @@ export type GroqErrorKind = 'config' | 'http' | 'timeout' | 'network' | 'format'
 
 /** Galat Groq tanpa isi respons, supaya aman dicatat di log server. */
 export class GroqError extends Error {
-  constructor(public readonly kind: GroqErrorKind, public readonly status?: number) {
+  constructor(public readonly kind: GroqErrorKind, public readonly status?: number, public readonly retryAfterMs?: number) {
     super('groq_' + kind + (status ? '_' + status : ''));
     this.name = 'GroqError';
   }
 }
 
 const CHAT_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const DEFAULT_CHAT_MODEL = 'llama-3.3-70b-versatile';
+// llama-3.3-70b-versatile dimatikan Groq 16 Agustus 2026; ini pengganti yang direkomendasikan.
+const DEFAULT_CHAT_MODEL = 'openai/gpt-oss-120b';
 export const GROQ_TIMEOUT_MS = 9_000;
 const DEFAULT_MAX_TOKENS = 512;
+/**
+ * Model gpt-oss bernalar dulu sebelum menjawab. Upaya nalar dibuat rendah supaya cepat, dan
+ * token nalar diberi ruang tambahan supaya tidak menghabiskan `maxTokens` milik jawaban.
+ */
+const REASONING_TOKEN_HEADROOM = 512;
+const isReasoningModel = (model: string) => model.startsWith('openai/gpt-oss');
 const DEFAULT_TEMPERATURE = 0.3;
 const RETRY_DELAY_MS = 400;
 /** Coba ulang hanya kalau sisa waktu masih cukup untuk satu panggilan yang berguna. */
 const MIN_RETRY_BUDGET_MS = 2_500;
+/** `retry-after` lebih lama dari ini → langsung fallback, daripada pengguna menunggu lama untuk hasil yang sama. */
+const MAX_RETRY_WAIT_MS = 2_000;
 
 const CompletionSchema = z.object({
   choices: z.array(z.object({ message: z.object({ content: z.string().nullable() }) })).min(1),
 });
 
-const isTransient = (e: unknown) => e instanceof GroqError && e.kind === 'http' && (e.status === 429 || (e.status ?? 0) >= 500);
+const isTransient = (e: unknown): e is GroqError => e instanceof GroqError && e.kind === 'http' && (e.status === 429 || (e.status ?? 0) >= 500);
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+/** Header `retry-after` (detik, boleh pecahan) yang dikirim Groq bersama 429. */
+function retryAfterMs(header: string | null): number | undefined {
+  const sec = Number(header);
+  return header && Number.isFinite(sec) && sec >= 0 ? sec * 1_000 : undefined;
+}
 
 async function requestOnce(key: string, messages: GroqMessage[], opts: ChatOptions, timeoutMs: number): Promise<string> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  const model = process.env.GROQ_CHAT_MODEL || DEFAULT_CHAT_MODEL;
+  const reasoning = isReasoningModel(model);
+  const maxTokens = opts.maxTokens ?? DEFAULT_MAX_TOKENS;
   try {
     const res = await fetch(CHAT_URL, {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + key, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: process.env.GROQ_CHAT_MODEL || DEFAULT_CHAT_MODEL,
+        model,
         messages,
         temperature: opts.temperature ?? DEFAULT_TEMPERATURE,
-        max_tokens: opts.maxTokens ?? DEFAULT_MAX_TOKENS,
+        max_tokens: reasoning ? maxTokens + REASONING_TOKEN_HEADROOM : maxTokens,
+        ...(reasoning ? { reasoning_effort: 'low', include_reasoning: false } : {}),
         ...(opts.json ? { response_format: { type: 'json_object' } } : {}),
       }),
       signal: ctrl.signal,
     });
-    if (!res.ok) throw new GroqError('http', res.status);
+    if (!res.ok) throw new GroqError('http', res.status, retryAfterMs(res.headers.get('retry-after')));
     const parsed = CompletionSchema.safeParse(await res.json());
     const content = parsed.success ? parsed.data.choices[0].message.content : null;
     if (!content) throw new GroqError('format');
@@ -80,7 +99,10 @@ async function requestOnce(key: string, messages: GroqMessage[], opts: ChatOptio
 }
 
 export const groq = {
-  /** Satu chat completion → teks jawaban. 429/5xx dicoba ulang maksimal sekali dalam batas waktu yang sama. */
+  /**
+   * Satu chat completion → teks jawaban. 429/5xx dicoba ulang maksimal sekali dalam batas waktu
+   * yang sama, setelah menunggu `retry-after` dari Groq (kalau ada).
+   */
   async chat(messages: GroqMessage[], opts: ChatOptions = {}): Promise<string> {
     const key = process.env.GROQ_API_KEY;
     if (!key) throw new GroqError('config');
@@ -89,9 +111,11 @@ export const groq = {
     try {
       return await requestOnce(key, messages, opts, timeoutMs);
     } catch (e) {
-      const remaining = deadline - Date.now() - RETRY_DELAY_MS;
-      if (!isTransient(e) || remaining < MIN_RETRY_BUDGET_MS) throw e;
-      await sleep(RETRY_DELAY_MS);
+      if (!isTransient(e)) throw e;
+      const wait = Math.max(RETRY_DELAY_MS, e.retryAfterMs ?? 0);
+      const remaining = deadline - Date.now() - wait;
+      if (wait > MAX_RETRY_WAIT_MS || remaining < MIN_RETRY_BUDGET_MS) throw e;
+      await sleep(wait);
       return requestOnce(key, messages, opts, remaining);
     }
   },
