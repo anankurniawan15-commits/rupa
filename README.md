@@ -21,6 +21,8 @@ Buka http://localhost:3000.
 | `npm run build` lalu `npm run start` | build produksi |
 | `npm run lint` | ESLint |
 | `npx tsc --noEmit` | cek tipe |
+| `npm run test:unit` | uji unit AI Assistant (tanpa browser, tanpa server, tanpa Groq) |
+| `npm test` | uji unit + uji endpoint `POST /api/assistant` (menyalakan `next dev` di port 3200, atau pakai `BASE_URL=http://localhost:<port>` kalau dev server sudah jalan) |
 | `node qa/screenshots.mjs http://localhost:3100` | screenshot QA semua halaman (1440 px & 390 px) ke `qa/output/` — jalankan `npm run start -- -p 3100` dulu |
 
 ### Akun demo
@@ -57,6 +59,7 @@ app/                      halaman (page.tsx = Server Component tipis + komponen 
   page.tsx                Beranda
   jelajahi/ produk/[id]/ sortir/ assistant/ jual/ dashboard/ keranjang/ checkout/ checkout/berhasil/
   pesanan/ profil/ wishlist/ masuk/ daftar/ lupa-sandi/ buka-toko/ pembayaran/[id]/ admin/
+  api/assistant/          route handler POST AI Assistant (Groq, server-only)
 proxy.ts                  gating rute (Next 16 = middleware)
 components/
   layout/                 Header, MobileDrawer, ProfileMenu, DemoBanner, Footer, BottomNav, AssistantLauncher
@@ -65,14 +68,16 @@ components/
   auth/ product/ home/ sortir/ assistant/ sell/ dashboard/ checkout/ payment/ orders/ profile/ shop/ admin/
   modals/                 ChatModal, ReasonModal, ReviewModal, TextModal (dipakai lintas halaman)
 lib/
-  clients/                supabase.ts, groq.ts, payment-gateway.ts  (STUB — belum dipakai)
+  clients/                groq.ts (chat() aktif; vision() STUB), supabase.ts, payment-gateway.ts (STUB)
   services/               satu-satunya akses data dari komponen (async + hook reaktif)
-  ai/                     assistant-engine.ts, sortir-engine.ts, listing-assist.ts (port dari prototipe)
+  ai/                     assistant-engine.ts, sortir-engine.ts, listing-assist.ts (port dari prototipe);
+                          assistant-llm.ts, assistant-prompts.ts, assistant-schema.ts (AI Assistant + Groq)
   data/                   JSON contoh dari rupa-ui-kit/design/data + konten editorial beranda
   store/                  Zustand: session, cart, wishlist, chat, sortir, sell, toast, db (database mock)
-  validation.ts format.ts
+  validation.ts format.ts rate-limit.ts
 types/                    user, product, order, payment, social, ai
 qa/                       skrip screenshot Playwright
+tests/assistant/          uji Playwright tanpa browser (unit/, api/) + kasus evaluasi
 rupa-ui-kit/              paket desain asli (acuan, tidak dipakai saat runtime)
 ```
 
@@ -91,11 +96,29 @@ Komponen tidak pernah membaca data langsung; semuanya lewat `lib/services`. Fung
 | `shop.service.ts` | store `db` | tabel `seller_profiles` (rekening dienkripsi di server) |
 | `moderation.service.ts` | store `db` | route handler `/api/admin` dengan cek role |
 | `sortir.service.ts` | skenario contoh; **foto sungguhan tidak dianalisis** | Groq vision lewat `lib/clients/groq.ts` di route handler |
-| `assistant.service.ts` | mesin aturan `lib/ai/assistant-engine.ts` | Groq chat + pencarian katalog Supabase |
+| `assistant.service.ts` | **sudah tersambung**: `POST /api/assistant` → Groq chat + katalog `products.json` (lihat [AI Assistant](#ai-assistant)) | katalog & status listing dari tabel `products`; riwayat ke `assistant_sessions` / `assistant_messages` |
 | `listing-assist.service.ts` | saran judul/deskripsi berbasis aturan | Groq chat; `claimsFlags` tetap lokal |
 | `profile.service.ts`, `seller.service.ts` | store `db` | tabel `profiles`, `addresses`, `messages` (Realtime) |
 
-Variabel lingkungan yang nanti dibutuhkan (`.env.local`): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `GROQ_API_KEY`, `PAYMENT_SERVER_KEY`.
+Variabel lingkungan yang nanti dibutuhkan (`.env.local`, contoh di `.env.example`): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `GROQ_API_KEY`, `GROQ_CHAT_MODEL`, `PAYMENT_SERVER_KEY`.
+
+### AI Assistant
+
+```
+UI (ChatShell) → assistant.service (fetch + AbortController)
+  → POST /api/assistant  (rate limit 20/menit/IP → validasi zod → id dicocokkan ke katalog)
+      ├─ "bandingkan"        → compareResp (deterministik, tanpa LLM)
+      ├─ tanpa GROQ_API_KEY  → mesin aturan respond()
+      └─ Groq: parseIntent → searchCatalog (kode) → explain   |  consultLLM  |  offtopic = teks tetap
+```
+
+- **Produk selalu dipilih kode**, bukan LLM: `searchCatalog()` di `lib/ai/assistant-engine.ts` (stok > 0, tidak `hidden`, budget/material/jenis). LLM hanya mengklasifikasi maksud dan menulis teks alasan/panduan. Harga, rating, stok, dan penjual di kartu dibaca dari katalog; teks LLM yang memuat angka atau klaim mutlak dibuang (`lib/ai/assistant-schema.ts`).
+- **Fallback**: Groq tidak tersedia, timeout (≤ 9 dtk total), 429/5xx (dicoba ulang sekali kalau `retry-after` ≤ 2 dtk dan masih muat dalam tenggat), atau JSON tidak valid → mesin aturan. Key ditolak (401/403) → pesan galat dengan tombol "Coba lagi". Penyebab hanya dicatat di log server (tanpa isi pesan pengguna), beserta `ASSISTANT_PROMPT_VERSION`.
+- **Log per respons**: `{"event":"reply","path":…,"reason":…,"task":…}`. `path`: `llm` (semua langkah LLM berhasil), `llm_partial` (maksud dari LLM, teks dari mesin aturan), `fallback` (seluruhnya mesin aturan), `rules` (perbandingan, sengaja tanpa LLM), `error` (key ditolak). `reason` contoh: `no_key`, `timeout`, `invalid_json`, `invalid_schema`, `http_429`, `http_401`, `http_404` (model di `GROQ_CHAT_MODEL` tidak ada / sudah dimatikan Groq — cek daftar di console.groq.com/docs/models). Kalau `npm run dev` tidak mencetak `- Environments: .env.local` saat start, file itu tidak terbaca; setelah membuat/mengubah `.env.local`, restart `npm run dev`.
+- **File**: `lib/clients/groq.ts` (`chat()`, server-only), `lib/ai/assistant-llm.ts` (orkestrasi), `lib/ai/assistant-prompts.ts` (system prompt + versi), `lib/ai/assistant-schema.ts` (zod + penyaring), `lib/rate-limit.ts`, `app/api/assistant/route.ts`.
+- **Env**: `GROQ_API_KEY` (server saja, tanpa `NEXT_PUBLIC_`), `GROQ_CHAT_MODEL` (default `openai/gpt-oss-120b`; model gpt-oss dipanggil dengan `reasoning_effort: low` supaya cepat). Tanpa key, chatbot tetap jalan dengan mesin aturan.
+- **Uji**: `npm run test:unit` (LLM dipalsukan), `npm test` (plus validasi endpoint). Evaluasi live ke Groq setelah mengubah prompt: `ASSISTANT_EVAL=1 BASE_URL=http://localhost:3000 npx playwright test --project=api eval` (kasus di `tests/assistant/eval-cases.ts`; jeda 15 dtk antar-giliran, atur dengan `ASSISTANT_EVAL_GAP_MS`).
+- **Batasan demo**: paket gratis Groq untuk gpt-oss dibatasi 8K token/menit (±3 giliran belanja per menit untuk **semua** pengguna); lewat dari itu jawaban datang dari mesin aturan (`reason: http_429` di log). Rate limit di memori satu instans dan IP dibaca dari `x-forwarded-for`; `hidden` dikirim klien karena data masih mock (`TODO(Supabase)`: server membaca status listing sendiri).
 
 ## Catatan keamanan mock
 

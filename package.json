@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "qa:screens": "node qa/screenshots.mjs http://localhost:3100",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "playwright test",
+    "test:unit": "playwright test --project=unit"
   },
   "dependencies": {
     "lucide-react": "^1.61.0",
