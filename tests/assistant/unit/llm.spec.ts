@@ -116,6 +116,12 @@ test.describe('answer() dengan LLM palsu', () => {
     expect(events).toContain('llm_error');
   });
 
+  test('key ditolak (401) → dilempar ke route sebagai galat, bukan fallback diam-diam', async () => {
+    const authError = Object.assign(new Error('groq_http_401'), { name: 'GroqError', status: 401 });
+    const { deps } = fake({ intent: authError });
+    await expect(answer(req('cari tas'), deps)).rejects.toBe(authError);
+  });
+
   test('waktu hampir habis → LLM dilewati', async () => {
     const r0 = req('cari tas');
     const { deps, calls } = fake({}, 500);
