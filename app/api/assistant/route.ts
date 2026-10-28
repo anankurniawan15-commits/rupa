@@ -42,6 +42,9 @@ function clientIp(request: NextRequest): string {
 }
 
 async function readBody(request: NextRequest): Promise<unknown> {
+  // Tolak body raksasa sebelum dibaca ke memori; panjang teks tetap dicek setelahnya
+  // karena content-length bisa tidak ada (chunked).
+  if (Number(request.headers.get('content-length') || 0) > MAX_BODY_CHARS) return undefined;
   const text = await request.text();
   return text.length > MAX_BODY_CHARS ? undefined : parseJson(text);
 }
@@ -78,7 +81,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(errorReply(MSG_BAD), { status: 400 });
   }
   const req = sanitizeRequest(parsed.data);
-  const reply = await replyFor(req, started);
-  log('reply', { mode: req.mode, kind: reply.msg.kind, ms: Date.now() - started });
-  return NextResponse.json(reply);
+  try {
+    const reply = await replyFor(req, started);
+    log('reply', { mode: req.mode, kind: reply.msg.kind, ms: Date.now() - started });
+    return NextResponse.json(reply);
+  } catch {
+    // Mesin aturan pun gagal (seharusnya tidak terjadi) — tetap kirim body yang bisa ditampilkan UI.
+    log('internal_error', { ms: Date.now() - started });
+    return NextResponse.json(errorReply(MSG_DOWN), { status: 500 });
+  }
 }

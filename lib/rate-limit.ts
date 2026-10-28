@@ -14,14 +14,21 @@ const MAX_KEYS = 10_000;
 /** `take(key, now)` menghitung satu permintaan; `now` diinjeksi supaya bisa diuji. */
 export function createRateLimiter(limit: number, windowMs: number) {
   const hits = new Map<string, { start: number; count: number }>();
-  const sweep = (now: number) => {
+  // Map menjaga urutan sisip, dan jendela baru disisip ulang → kunci pertama = jendela tertua.
+  // Saat penuh, yang dibuang hanya entri tertua (bukan semua), supaya banjir IP palsu
+  // tidak mereset hitungan pengguna lain.
+  const evict = (now: number) => {
     for (const [k, w] of hits) if (now - w.start >= windowMs) hits.delete(k);
-    if (hits.size >= MAX_KEYS) hits.clear();
+    for (const k of hits.keys()) {
+      if (hits.size < MAX_KEYS) break;
+      hits.delete(k);
+    }
   };
   return function take(key: string, now: number): RateResult {
     let w = hits.get(key);
     if (!w || now - w.start >= windowMs) {
-      if (!w && hits.size >= MAX_KEYS) sweep(now);
+      hits.delete(key);
+      if (hits.size >= MAX_KEYS) evict(now);
       w = { start: now, count: 0 };
       hits.set(key, w);
     }
