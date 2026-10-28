@@ -31,16 +31,21 @@ const MAX_SAFETY_CHARS = 600;
 
 /* ---------- masukan klien ---------- */
 const ProductId = z.string().regex(/^p\d{1,4}$/);
-const Material = z.custom<MaterialKey>((v) => typeof v === 'string' && v in MATERIALS);
+// hasOwn, bukan `in`: "constructor"/"toString" tidak boleh lolos sebagai material.
+const Material = z.custom<MaterialKey>((v) => typeof v === 'string' && Object.hasOwn(MATERIALS, v));
 
+/**
+ * Konteks belanja berasal dari balasan server sebelumnya, jadi field yang rusak/kelewat batas
+ * dibuang (`catch`) alih-alih menolak seluruh permintaan — percakapan tidak boleh macet di 400.
+ */
 const CtxSchema = z.object({
-  budget: z.number().int().min(0).max(MAX_BUDGET).optional(),
-  mats: z.array(Material).max(MAX_LIST).optional(),
-  types: z.array(z.string().max(30)).max(MAX_LIST).optional(),
-  words: z.array(z.string().max(30)).max(MAX_LIST).optional(),
-  gift: z.boolean().optional(),
-  lastIds: z.array(ProductId).max(MAX_LIST).optional(),
-  awaiting: z.literal('gift').nullable().optional(),
+  budget: z.number().min(0).transform((n) => Math.min(Math.round(n), MAX_BUDGET)).optional().catch(undefined),
+  mats: z.array(Material).max(MAX_LIST).optional().catch(undefined),
+  types: z.array(z.string().max(30)).max(MAX_LIST).optional().catch(undefined),
+  words: z.array(z.string().max(30)).max(MAX_LIST).optional().catch(undefined),
+  gift: z.boolean().optional().catch(undefined),
+  lastIds: z.array(ProductId).max(MAX_LIST).optional().catch(undefined),
+  awaiting: z.literal('gift').nullable().optional().catch(undefined),
 });
 
 export const AssistantRequestSchema = z.object({
@@ -58,12 +63,14 @@ const CATALOG_IDS = new Set(PRODUCTS.map((p) => p.id));
 const PRODUCT_TYPES = new Set(PRODUCTS.map((p) => p.type));
 export const isCatalogId = (id: string) => CATALOG_IDS.has(id);
 
-/** Buang id yang tidak ada di katalog (klien bisa mengirim apa saja) — mencegah crash di mesin aturan. */
+const catalogIds = (ids: string[]) => ids.filter((id, i, a) => isCatalogId(id) && a.indexOf(id) === i);
+
+/** Buang id yang tidak ada di katalog dan duplikat (klien bisa mengirim apa saja) — mencegah crash di mesin aturan. */
 export function sanitizeRequest(req: AssistantRequest): AssistantRequest {
   const ctx: ShopContext = { ...req.ctx };
-  if (ctx.lastIds) ctx.lastIds = ctx.lastIds.filter(isCatalogId);
+  if (ctx.lastIds) ctx.lastIds = catalogIds(ctx.lastIds);
   if (ctx.types) ctx.types = ctx.types.filter((t) => PRODUCT_TYPES.has(t));
-  return { ...req, ctx, compare: req.compare.filter(isCatalogId), hidden: req.hidden.filter(isCatalogId) };
+  return { ...req, ctx, compare: catalogIds(req.compare), hidden: catalogIds(req.hidden) };
 }
 
 /* ---------- keluaran LLM ---------- */
@@ -133,20 +140,29 @@ export function sanitizeExplain(out: Explain, pickedIds: string[]): { intro: str
   return { intro: isCatalogSafe(intro) ? intro : '', reasons };
 }
 
-/** Panduan dari LLM → jumlah dan panjang dibatasi, duplikat dibuang (dipakai sebagai key React). */
+/** Potong lalu kosongkan kalau memuat klaim mutlak. */
+const claimFreeClip = (s: string, max: number) => {
+  const t = clip(s, max);
+  return isClaimFree(t) ? t : '';
+};
+
+/**
+ * Panduan dari LLM → jumlah dan panjang dibatasi, klaim mutlak dibuang (catatan keamanan per kalimat),
+ * duplikat dibuang (dipakai sebagai key React). Judul kosong = panduan tidak dipakai.
+ */
 export function sanitizeGuide(g: Guide): Guide {
   const ideas: GuideIdea[] = [];
   for (const idea of g.ideas) {
-    const name = clip(idea.name, MAX_TITLE_CHARS);
-    const steps = uniq(idea.steps.map((s) => clip(s, MAX_STEP_CHARS)).filter(isClaimFree)).slice(0, MAX_STEPS);
-    if (name && steps.length && !ideas.some((x) => x.name === name)) ideas.push({ name, meta: clip(idea.meta, MAX_META_CHARS), steps });
+    const name = claimFreeClip(idea.name, MAX_TITLE_CHARS);
+    const steps = uniq(idea.steps.map((s) => claimFreeClip(s, MAX_STEP_CHARS))).slice(0, MAX_STEPS);
+    if (name && steps.length && !ideas.some((x) => x.name === name)) ideas.push({ name, meta: claimFreeClip(idea.meta, MAX_META_CHARS), steps });
     if (ideas.length === MAX_IDEAS) break;
   }
   return {
-    title: clip(g.title, MAX_TITLE_CHARS),
-    paras: g.paras.map((p) => clip(p, MAX_PARA_CHARS)).filter((p) => p && isClaimFree(p)).slice(0, MAX_PARAS),
+    title: claimFreeClip(g.title, MAX_TITLE_CHARS),
+    paras: uniq(g.paras.map((p) => claimFreeClip(p, MAX_PARA_CHARS))).slice(0, MAX_PARAS),
     ideas,
-    safety: clip(g.safety, MAX_SAFETY_CHARS),
+    safety: clip(g.safety.split(/(?<=[.!?])\s+/).filter(isClaimFree).join(' '), MAX_SAFETY_CHARS),
   };
 }
 

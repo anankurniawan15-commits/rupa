@@ -22,7 +22,8 @@ export function parseBudget(t: string): number {
   if (u === 'rb' || u === 'ribu' || u === 'k') n *= 1000;
   else if (u === 'jt' || u === 'juta') n *= 1000000;
   else if (n < 1000) n *= 1000;
-  return n;
+  // "2,05 jt" → 2049999.9999… karena floating point; budget selalu rupiah bulat.
+  return Math.round(n);
 }
 
 export const MATRX = MATERIAL_PATTERNS;
@@ -99,6 +100,8 @@ export interface ShopFlags {
 
 /** Jumlah kartu produk per balasan. */
 export const MAX_PICKS = 3;
+/** Tambahan skor kalau kegunaan produk cocok dengan permintaan (lebih kecil dari bonus hadiah = 6). */
+const USE_SCORE_BONUS = 4;
 
 /** Ekstraksi kriteria berbasis regex dari teks huruf kecil. */
 export function extractCriteria(t: string): ShopCriteria {
@@ -106,7 +109,7 @@ export function extractCriteria(t: string): ShopCriteria {
   MATRX.forEach(([re, k]) => { if (re.test(t)) mats.push(k); });
   let types: string[] = [];
   const words: string[] = [];
-  TYPERX.forEach(([re, arr, w]) => { if (re.test(t)) { types = types.concat(arr); words.push(w); } });
+  TYPERX.forEach(([re, arr, w]) => { if (re.test(t)) { types = types.concat(arr.filter((x) => types.indexOf(x) < 0)); words.push(w); } });
   return { budget: parseBudget(t), mats, types, words, gift: /hadiah|kado/.test(t) };
 }
 
@@ -158,7 +161,7 @@ export function searchCatalog(crit: ShopCriteria, opts: SearchOptions): { list: 
     (!crit.types.length || crit.types.indexOf(p.type) >= 0);
   const uses = opts.uses || [];
   const score = (p: Product) =>
-    p.rating * 10 + p.sold / 40 + (crit.gift && p.uses.indexOf('hadiah') >= 0 ? 6 : 0) + (p.uses.some((u) => uses.indexOf(u) >= 0) ? 4 : 0);
+    p.rating * 10 + p.sold / 40 + (crit.gift && p.uses.indexOf('hadiah') >= 0 ? 6 : 0) + (p.uses.some((u) => uses.indexOf(u) >= 0) ? USE_SCORE_BONUS : 0);
   const list = base.filter((p) => match(p, true)).sort((a, b) => score(b) - score(a));
   if (list.length || !crit.budget) return { list, relaxed: false };
   return { list: base.filter((p) => match(p, false)).sort((a, b) => a.price - b.price), relaxed: true };

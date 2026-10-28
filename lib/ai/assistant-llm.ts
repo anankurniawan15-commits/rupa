@@ -86,15 +86,16 @@ const matchMats = (xs: string[]): MaterialKey[] =>
  * Intent LLM → kriteria katalog, digabung dengan hasil regex supaya kata yang terlewat LLM tetap terbaca.
  * Material/jenis disaring ke kunci yang dikenal katalog. null kalau pengguna meminta material atau jenis
  * barang yang tidak dijual di katalog (mis. "kursi emas") — jawaban jujur, bukan produk pengganti.
+ * Pada lanjutan (`refine`), kata asing diabaikan saja karena kriteria diwarisi dari konteks.
  */
-export function intentToCriteria(intent: Intent, t: string): ShopCriteria | null {
+export function intentToCriteria(intent: Intent, t: string, refine: boolean): ShopCriteria | null {
   const rx = extractCriteria(t);
   const types = matchTypes(intent.types);
   const mats = matchMats(intent.materials);
   const unknownType = intent.types.length > 0 && !types.length && !rx.types.length;
   const unknownMat = intent.materials.length > 0 && !mats.length && !rx.mats.length;
-  if (unknownType || unknownMat) return null;
-  const union = <T,>(a: T[], b: T[]) => a.concat(b.filter((x) => a.indexOf(x) < 0));
+  if (!refine && (unknownType || unknownMat)) return null;
+  const union = <T,>(a: T[], b: T[]) => a.concat(b).filter((x, i, all) => all.indexOf(x) === i);
   return {
     budget: rx.budget || intent.budget || 0,
     mats: union(rx.mats, mats),
@@ -131,7 +132,7 @@ async function shopLLM(req: AssistantRequest, intent: Intent, deps: AssistantDep
   const t = req.text.toLowerCase();
   const ctx = req.ctx;
   const flags = mergeFlags(extractFlags(t), intent);
-  const raw = intentToCriteria(intent, t);
+  const raw = intentToCriteria(intent, t, flags.refine);
   if (!raw) return noMatchReply(mergeCriteria(extractCriteria(t), ctx, flags), flags);
   const crit = mergeCriteria(raw, ctx, flags);
   const clarify = clarifyReply(crit, flags, raw.gift || ctx.awaiting === 'gift');
@@ -152,7 +153,7 @@ export async function consultLLM(text: string, history: HistoryItem[], deps: Ass
   const out = await callJson(deps, 'consult', CONSULT_PROMPT, user, CONSULT_OPTS, GuideSchema);
   if (!out) return null;
   const guide = sanitizeGuide(out);
-  if (!guide.ideas.length) return null;
+  if (!guide.title || !guide.ideas.length) return null;
   return { role: 'ai', kind: 'guide', title: guide.title, paras: guide.paras, ideas: guide.ideas, safety: ensureSafety(text, guide), chips: consult(text.toLowerCase()).chips };
 }
 

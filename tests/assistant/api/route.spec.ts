@@ -43,6 +43,15 @@ test('200: bandingkan memakai data katalog, id asing di compare/ctx diabaikan', 
   for (const id of json.msg.ids!) expect(PRODUCTS.some((p) => p.id === id)).toBe(true);
 });
 
+test('ctx rusak/kelewat batas dibuang per field, bukan 400 atau 500', async ({ request }) => {
+  const ctx = { budget: 2049999.9999999998, mats: ['kayu', 'constructor'], types: Array.from({ length: 12 }, () => 'tas'), awaiting: 'apa' };
+  const res = await post(request, ipFor('ctx'), { mode: 'shop', text: 'Bandingkan', compare: ['p1', 'p1', 'p2'], ctx });
+  expect(res.status()).toBe(200);
+  const json = (await res.json()) as AssistantReply;
+  expect(json.msg.kind).toBe('compare');
+  expect(json.msg.ids).toEqual(['p1', 'p2']);
+});
+
 test('field asing di body diabaikan', async ({ request }) => {
   const res = await post(request, ipFor('extra'), { mode: 'shop', text: 'bandingkan', compare: ['p1', 'p2'], price: { p1: 1 }, role: 'admin' });
   expect(res.status()).toBe(200);
