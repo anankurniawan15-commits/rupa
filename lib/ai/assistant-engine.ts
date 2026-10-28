@@ -37,9 +37,12 @@ export interface EngineInput {
   hidden?: string[];
 }
 
+/** Permintaan membandingkan selalu dijawab deterministik (angka dari katalog), tanpa LLM. */
+export const COMPARE_RE = /bandingkan|perbandingan/;
+
 export function respond(text: string, chat: EngineInput): AssistantReply {
   const t = text.toLowerCase();
-  if (/bandingkan|perbandingan/.test(t)) return compareResp(chat);
+  if (COMPARE_RE.test(t)) return compareResp(chat);
   const shopWords = /(cari|beli|rekomendasi|di ?bawah|ada produk|carikan|budget|hadiah|kado|yang lebih murah|pilihan lain)/;
   const consultWords = /(bisa dibuat|bisa jadi apa|cara |bagaimana|gimana|\bide\b|material apa|cocok untuk membuat|menentukan harga|harga jual|deskripsi|memanfaatkan|bikin|membuat)/;
   if ((consultWords.test(t) && !shopWords.test(t)) || (chat.mode === 'upcycle' && !shopWords.test(t))) return { msg: consult(t) };
