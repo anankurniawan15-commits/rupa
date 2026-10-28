@@ -6,19 +6,26 @@ import type { AssistantReply, ShopContext } from '@/types/ai';
 /**
  * Evaluasi live terhadap Groq sungguhan — TIDAK jalan di `npm test` biasa.
  * Jalankan: ASSISTANT_EVAL=1 npx playwright test --project=api eval   (butuh GROQ_API_KEY di .env.local)
+ * Antar-giliran diberi jeda supaya tidak menabrak batas token per menit Groq (paket gratis 8K TPM);
+ * kalau tertabrak, jawabannya dari mesin aturan dan evaluasi tidak lagi menilai LLM.
  */
 test.skip(!process.env.ASSISTANT_EVAL, 'Set ASSISTANT_EVAL=1 untuk evaluasi live (memanggil Groq).');
+
+const GAP_MS = Number(process.env.ASSISTANT_EVAL_GAP_MS ?? 15_000);
+const TURN_BUDGET_MS = 15_000;
 
 const byId = (id: string) => PRODUCTS.find((p) => p.id === id);
 const textOf = (r: AssistantReply) => JSON.stringify([r.msg.paras, r.msg.reasons, r.msg.title, r.msg.ideas, r.msg.safety, r.msg.errText]);
 
 for (const c of EVAL_CASES) {
   test(c.name, async ({ request }, info) => {
+    test.setTimeout(c.turns.length * (GAP_MS + TURN_BUDGET_MS));
     const ip = 'eval-' + Date.now() + '-' + info.testId;
     let ctx: ShopContext = {};
     let lastIds: string[] = [];
     const history: { role: 'user' | 'ai'; text: string }[] = [];
     for (const turn of c.turns) {
+      await new Promise((resolve) => setTimeout(resolve, GAP_MS));
       const t0 = Date.now();
       const res = await request.post('/api/assistant', {
         headers: { 'x-forwarded-for': ip },
