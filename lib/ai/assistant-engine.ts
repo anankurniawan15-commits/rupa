@@ -1,7 +1,8 @@
 /**
  * Mesin AI Assistant berbasis aturan — port dari prototipe (respond → shop / consult / compareResp).
- * TODO(Groq): assistant.service.ts nanti mengganti fungsi ini dengan panggilan Groq chat
- * + pencarian katalog Supabase; bentuk keluaran (AssistantReply) dipertahankan.
+ * Dipakai route /api/assistant sebagai cadangan saat Groq tidak tersedia, dan potongan `shop()`
+ * (searchCatalog, mergeCriteria, productsReply, …) dipakai ulang jalur LLM di assistant-llm.ts
+ * supaya pemilihan produk tetap deterministik.
  */
 import { ASSISTANT_KB, CONDITIONS, MATERIAL_PATTERNS, MATERIALS, PRODUCTS, SELLERS, TYPE_PATTERNS } from '@/lib/data';
 import { r1, rp } from '@/lib/format';
@@ -74,69 +75,136 @@ export function compareResp(chat: EngineInput): AssistantReply {
   };
 }
 
-export function shop(t: string, chat: EngineInput): AssistantReply {
-  const ctx = chat.ctx || {};
-  const budget = parseBudget(t);
+/** Kriteria pencarian katalog — dari regex (mesin aturan) atau dari intent LLM yang sudah divalidasi. */
+export interface ShopCriteria {
+  budget: number;
+  mats: MaterialKey[];
+  types: string[];
+  /** Label jenis barang untuk kalimat pembuka ("tas", "dekorasi rumah"). */
+  words: string[];
+  gift: boolean;
+}
+
+/** Sinyal lanjutan percakapan ("yang lebih murah", "pilihan lain"). */
+export interface ShopFlags {
+  cheaper: boolean;
+  other: boolean;
+  refine: boolean;
+  /** Pengguna menyebut "bahan" → material mentah boleh ikut direkomendasikan. */
+  wantsBahan: boolean;
+}
+
+/** Jumlah kartu produk per balasan. */
+export const MAX_PICKS = 3;
+
+/** Ekstraksi kriteria berbasis regex dari teks huruf kecil. */
+export function extractCriteria(t: string): ShopCriteria {
   const mats: MaterialKey[] = [];
   MATRX.forEach(([re, k]) => { if (re.test(t)) mats.push(k); });
   let types: string[] = [];
   const words: string[] = [];
   TYPERX.forEach(([re, arr, w]) => { if (re.test(t)) { types = types.concat(arr); words.push(w); } });
-  const gift = /hadiah|kado/.test(t) || ctx.awaiting === 'gift';
+  return { budget: parseBudget(t), mats, types, words, gift: /hadiah|kado/.test(t) };
+}
+
+export function extractFlags(t: string): ShopFlags {
   const cheaper = /lebih murah|yang murah|termurah/.test(t);
   const other = /pilihan lain|yang lain|lainnya/.test(t);
-  const wantsBahan = /\bbahan\b/.test(t);
-  const refine = cheaper || other || /^(yang|kalau|terus|oke|ada yang)/.test(t);
-  let crit = { budget, mats, types, words, gift };
-  if (refine) {
+  return { cheaper, other, refine: cheaper || other || /^(yang|kalau|terus|oke|ada yang)/.test(t), wantsBahan: /\bbahan\b/.test(t) };
+}
+
+/**
+ * Gabungkan kriteria giliran ini dengan konteks sebelumnya. Lanjutan ("yang lebih murah") mewarisi
+ * kriteria lama yang tidak disebut ulang; "lebih murah" menurunkan budget di bawah pilihan termurah sebelumnya.
+ */
+export function mergeCriteria(raw: ShopCriteria, ctx: ShopContext, flags: ShopFlags): ShopCriteria {
+  const gift = raw.gift || ctx.awaiting === 'gift';
+  let crit: ShopCriteria = { ...raw, gift };
+  if (flags.refine) {
     crit = {
-      budget: budget || ctx.budget || 0,
-      mats: mats.length ? mats : ctx.mats || [],
-      types: types.length ? types : ctx.types || [],
-      words: words.length ? words : ctx.words || [],
+      budget: raw.budget || ctx.budget || 0,
+      mats: raw.mats.length ? raw.mats : ctx.mats || [],
+      types: raw.types.length ? raw.types : ctx.types || [],
+      words: raw.words.length ? raw.words : ctx.words || [],
       gift: gift || !!ctx.gift,
     };
   }
-  if (cheaper && ctx.lastIds && ctx.lastIds.length) crit.budget = Math.min(...ctx.lastIds.map((id) => P(id).price)) - 1;
-  const nothing = !crit.budget && !crit.mats.length && !crit.types.length;
-  if (nothing && gift) {
-    return { msg: { role: 'ai', kind: 'clarify', paras: ['Bisa! Supaya pilihannya pas: kira-kira budget-nya berapa, dan temanmu lebih suka barang fashion atau barang untuk kamar dan meja?'], chips: ['Hadiah di bawah Rp100.000', 'Hadiah fashion di bawah Rp150.000', 'Hadiah untuk meja kerja'] }, ctx: { awaiting: 'gift', gift: true } };
-  }
-  if (nothing && !refine) {
-    return { msg: { role: 'ai', kind: 'clarify', paras: ['Aku bisa mencarikan produk dari katalog Rupa. Sebutkan salah satu: budget, jenis barang, material, atau untuk apa barangnya.'], chips: ['Tas di bawah Rp150.000', 'Dekorasi kamar dari kayu', 'Produk berbahan denim bekas'] }, ctx: {} };
-  }
-  const hidden = chat.hidden || [];
-  const base = PRODUCTS.filter((p) => p.stock > 0 && hidden.indexOf(p.id) < 0 && (wantsBahan || p.type !== 'bahan'));
+  if (flags.cheaper && ctx.lastIds && ctx.lastIds.length) crit.budget = Math.min(...ctx.lastIds.map((id) => P(id).price)) - 1;
+  return crit;
+}
+
+export interface SearchOptions {
+  hidden: string[];
+  wantsBahan: boolean;
+  /** id yang sudah ditunjukkan (untuk "pilihan lain"). */
+  exclude: string[];
+  /** Kegunaan yang diminta (hanya dari intent LLM) — menaikkan skor, tidak menyaring. */
+  uses?: string[];
+}
+
+/**
+ * Filter + urutan katalog yang deterministik: stok > 0, tidak diturunkan admin, cocok budget/material/jenis.
+ * Kalau tidak ada yang masuk budget, budget dilonggarkan dan hasil diurutkan dari termurah (`relaxed`).
+ * TODO(Supabase): ganti sumber PRODUCTS dengan query tabel `products` (status aktif, stok > 0) di server.
+ */
+export function searchCatalog(crit: ShopCriteria, opts: SearchOptions): { list: Product[]; relaxed: boolean } {
+  const base = PRODUCTS.filter((p) => p.stock > 0 && opts.hidden.indexOf(p.id) < 0 && opts.exclude.indexOf(p.id) < 0 && (opts.wantsBahan || p.type !== 'bahan'));
   const match = (p: Product, withBudget: boolean) =>
     (!withBudget || !crit.budget || p.price <= crit.budget) &&
     (!crit.mats.length || p.mats.some((m) => crit.mats.indexOf(m) >= 0)) &&
     (!crit.types.length || crit.types.indexOf(p.type) >= 0);
-  let list = base.filter((p) => match(p, true));
-  if (other && ctx.lastIds) list = list.filter((p) => ctx.lastIds!.indexOf(p.id) < 0);
-  const score = (p: Product) => p.rating * 10 + p.sold / 40 + (crit.gift && p.uses.indexOf('hadiah') >= 0 ? 6 : 0);
-  list.sort((a, b) => score(b) - score(a));
-  let relaxed = false;
-  if (!list.length && crit.budget) {
-    relaxed = true;
-    list = base.filter((p) => match(p, false) && !(other && ctx.lastIds && ctx.lastIds.indexOf(p.id) >= 0)).sort((a, b) => a.price - b.price);
+  const uses = opts.uses || [];
+  const score = (p: Product) =>
+    p.rating * 10 + p.sold / 40 + (crit.gift && p.uses.indexOf('hadiah') >= 0 ? 6 : 0) + (p.uses.some((u) => uses.indexOf(u) >= 0) ? 4 : 0);
+  const list = base.filter((p) => match(p, true)).sort((a, b) => score(b) - score(a));
+  if (list.length || !crit.budget) return { list, relaxed: false };
+  return { list: base.filter((p) => match(p, false)).sort((a, b) => a.price - b.price), relaxed: true };
+}
+
+/**
+ * Balasan klarifikasi kalau kriteria belum cukup untuk mencari; null kalau sudah cukup.
+ * `giftAsked` = hadiah disebut di giliran ini atau sedang ditanyakan (bukan warisan ctx.gift),
+ * supaya lanjutan biasa setelah sesi hadiah tidak memicu pertanyaan hadiah lagi.
+ */
+export function clarifyReply(crit: ShopCriteria, flags: ShopFlags, giftAsked: boolean): AssistantReply | null {
+  const nothing = !crit.budget && !crit.mats.length && !crit.types.length;
+  if (nothing && giftAsked) {
+    return { msg: { role: 'ai', kind: 'clarify', paras: ['Bisa! Supaya pilihannya pas: kira-kira budget-nya berapa, dan temanmu lebih suka barang fashion atau barang untuk kamar dan meja?'], chips: ['Hadiah di bawah Rp100.000', 'Hadiah fashion di bawah Rp150.000', 'Hadiah untuk meja kerja'] }, ctx: { awaiting: 'gift', gift: true } };
   }
-  const picks = list.slice(0, 3);
-  if (!picks.length) {
-    return {
-      msg: { role: 'ai', kind: 'clarify', paras: [other ? 'Itu semua pilihan yang cocok di katalog saat ini.' : 'Belum ada produk di katalog yang cocok dengan kriteria itu.', 'Coba longgarkan salah satu: material, jenis barang, atau budget.'], chips: ['Tampilkan produk di bawah Rp100.000', 'Ada produk berbahan kayu?'] },
-      ctx: { ...crit, lastIds: [] },
-    };
+  if (nothing && !flags.refine) {
+    return { msg: { role: 'ai', kind: 'clarify', paras: ['Aku bisa mencarikan produk dari katalog Rupa. Sebutkan salah satu: budget, jenis barang, material, atau untuk apa barangnya.'], chips: ['Tas di bawah Rp150.000', 'Dekorasi kamar dari kayu', 'Produk berbahan denim bekas'] }, ctx: {} };
   }
+  return null;
+}
+
+/** Balasan jujur saat tidak ada produk yang cocok — tanpa produk pengganti karangan. */
+export function noMatchReply(crit: ShopCriteria, flags: ShopFlags): AssistantReply {
+  return {
+    msg: { role: 'ai', kind: 'clarify', paras: [flags.other ? 'Itu semua pilihan yang cocok di katalog saat ini.' : 'Belum ada produk di katalog yang cocok dengan kriteria itu.', 'Coba longgarkan salah satu: material, jenis barang, atau budget.'], chips: ['Tampilkan produk di bawah Rp100.000', 'Ada produk berbahan kayu?'] },
+    ctx: { ...crit, lastIds: [] },
+  };
+}
+
+/** Baris harga "kenapa cocok" — selalu dari data katalog, juga dipakai di jalur LLM. */
+export function priceReason(p: Product, crit: ShopCriteria, relaxed: boolean, cheaper: boolean): string {
+  if (crit.budget && !relaxed) return rp(p.price) + ' — masih di bawah ' + rp(cheaper ? crit.budget + 1 : crit.budget);
+  return 'Harga ' + rp(p.price);
+}
+
+export function ruleReasons(picks: Product[], crit: ShopCriteria, relaxed: boolean, cheaper: boolean): Record<string, string[]> {
   const reasons: Record<string, string[]> = {};
   picks.forEach((p) => {
-    const r: string[] = [];
-    if (crit.budget && !relaxed) r.push(rp(p.price) + ' — masih di bawah ' + rp(cheaper ? crit.budget + 1 : crit.budget));
-    else r.push('Harga ' + rp(p.price));
+    const r: string[] = [priceReason(p, crit, relaxed, cheaper)];
     r.push((crit.mats.length ? 'Material: ' : 'Dibuat dari ') + p.matShort.toLowerCase() + ' (menurut penjual)');
     if (crit.gift) r.push(p.stock === 1 ? 'Satu-satunya — tidak ada yang sama persis' : 'Rating ' + r1(p.rating) + ' dari ' + p.nrev + ' ulasan');
     else r.push('Rating ' + r1(p.rating) + ' · ' + p.sold + ' terjual');
     reasons[p.id] = r;
   });
+  return reasons;
+}
+
+export function ruleParas(count: number, crit: ShopCriteria, relaxed: boolean, flags: ShopFlags): string[] {
+  const { cheaper, other } = flags;
   const desc: string[] = [];
   if (crit.words.length) desc.push(crit.words[0]);
   if (crit.mats.length) desc.push('berbahan ' + crit.mats.map((m) => MATERIALS[m].toLowerCase()).join(' atau '));
@@ -144,12 +212,40 @@ export function shop(t: string, chat: EngineInput): AssistantReply {
   const paras: string[] = [];
   if (relaxed && cheaper) paras.push('Pilihan sebelumnya sudah yang termurah untuk kriteria ini. Ini daftar lengkapnya, diurutkan dari harga terendah:');
   else if (relaxed) paras.push('Belum ada ' + (desc.slice(0, 2).join(' ') || 'produk') + (other ? ' lain' : '') + ' di bawah ' + rp(crit.budget) + '. Ini yang paling mendekati, diurutkan dari yang termurah:');
-  else paras.push('Aku menemukan ' + picks.length + ' pilihan' + (desc.length ? ' ' + desc.join(', ') : '') + (other ? ' yang belum kutunjukkan' : '') + '.');
+  else paras.push('Aku menemukan ' + count + ' pilihan' + (desc.length ? ' ' + desc.join(', ') : '') + (other ? ' yang belum kutunjukkan' : '') + '.');
   if (crit.gift) paras.push('Untuk hadiah, aku memprioritaskan produk dengan cerita bahan yang jelas dan rating tinggi.');
+  return paras;
+}
+
+/** Rakit balasan kartu produk + konteks lanjutan. `text` mengganti alasan/paragraf aturan (jalur LLM). */
+export function productsReply(
+  picks: Product[], crit: ShopCriteria, ctx: ShopContext, flags: ShopFlags, relaxed: boolean,
+  text: { reasons?: Record<string, string[]>; paras?: string[] } = {},
+): AssistantReply {
+  const reasons = text.reasons || ruleReasons(picks, crit, relaxed, flags.cheaper);
+  const paras = text.paras || ruleParas(picks.length, crit, relaxed, flags);
   return {
     msg: { role: 'ai', kind: 'products', ids: picks.map((p) => p.id), reasons, paras, chips: ['Yang lebih murah', 'Bandingkan produk ini', 'Ada pilihan lain?'] },
-    ctx: { ...crit, budget: relaxed || cheaper ? ctx.budget || crit.budget : crit.budget, lastIds: picks.map((p) => p.id), awaiting: null },
+    ctx: { ...crit, budget: relaxed || flags.cheaper ? ctx.budget || crit.budget : crit.budget, lastIds: picks.map((p) => p.id), awaiting: null },
   };
+}
+
+/** Opsi pencarian dari konteks percakapan. */
+export const searchOptions = (ctx: ShopContext, flags: ShopFlags, hidden: string[], uses?: string[]): SearchOptions => ({
+  hidden, wantsBahan: flags.wantsBahan, exclude: flags.other && ctx.lastIds ? ctx.lastIds : [], uses,
+});
+
+export function shop(t: string, chat: EngineInput): AssistantReply {
+  const ctx = chat.ctx || {};
+  const flags = extractFlags(t);
+  const raw = extractCriteria(t);
+  const crit = mergeCriteria(raw, ctx, flags);
+  const clarify = clarifyReply(crit, flags, raw.gift || ctx.awaiting === 'gift');
+  if (clarify) return clarify;
+  const { list, relaxed } = searchCatalog(crit, searchOptions(ctx, flags, chat.hidden || []));
+  const picks = list.slice(0, MAX_PICKS);
+  if (!picks.length) return noMatchReply(crit, flags);
+  return productsReply(picks, crit, ctx, flags, relaxed);
 }
 
 /** Baris perbandingan untuk tampilan berkolom. */
