@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { groq } from '@/lib/clients/groq';
 import { respond } from '@/lib/ai/assistant-engine';
-import { answer, isAuthError } from '@/lib/ai/assistant-llm';
+import { answer, groqReason, isAuthError, type AnswerPath, type AnswerResult, type FailReason } from '@/lib/ai/assistant-llm';
 import { ASSISTANT_PROMPT_VERSION } from '@/lib/ai/assistant-prompts';
 import { AssistantRequestSchema, parseJson, sanitizeRequest, type AssistantRequest } from '@/lib/ai/assistant-schema';
 import { createRateLimiter } from '@/lib/rate-limit';
@@ -32,10 +32,13 @@ const MSG_DOWN = 'Asisten sedang tidak bisa dihubungi. Coba lagi beberapa saat l
 
 const errorReply = (errText: string): AssistantReply => ({ msg: { role: 'ai', kind: 'error', errText } });
 
-/** Log server tanpa isi pesan pengguna dan tanpa key. */
-function log(event: string, detail: Record<string, string | number> = {}) {
+/** Log server tanpa isi pesan pengguna dan tanpa key. Field `undefined` tidak ikut tertulis. */
+function log(event: string, detail: Record<string, string | number | undefined> = {}) {
   console.info(JSON.stringify({ scope: 'assistant', v: ASSISTANT_PROMPT_VERSION, event, ...detail }));
 }
+
+/** Jawaban + jalurnya untuk log. `error` = key ditolak Groq; `no_key`/`exception` = alasan khusus route. */
+type RouteResult = Omit<AnswerResult, 'path' | 'reason'> & { path: AnswerPath | 'error'; reason?: FailReason | 'no_key' | 'exception' };
 
 function clientIp(request: NextRequest): string {
   return request.headers.get('x-forwarded-for')?.split(',')[0].trim() || request.headers.get('x-real-ip') || 'unknown';
@@ -49,22 +52,15 @@ async function readBody(request: NextRequest): Promise<unknown> {
   return text.length > MAX_BODY_CHARS ? undefined : parseJson(text);
 }
 
-async function replyFor(req: AssistantRequest, started: number): Promise<AssistantReply> {
+async function replyFor(req: AssistantRequest, started: number): Promise<RouteResult> {
   const engine = { mode: req.mode, ctx: req.ctx, compare: req.compare, hidden: req.hidden };
-  if (!process.env.GROQ_API_KEY) {
-    log('fallback', { reason: 'no_key' });
-    return respond(req.text, engine);
-  }
+  if (!process.env.GROQ_API_KEY) return { reply: respond(req.text, engine), path: 'fallback', reason: 'no_key' };
   const deadline = started + REQUEST_BUDGET_MS;
   try {
-    return await answer(req, { chat: groq.chat, remainingMs: () => deadline - Date.now(), log });
+    return await answer(req, { chat: groq.chat, remainingMs: () => deadline - Date.now() });
   } catch (e) {
-    if (isAuthError(e)) {
-      log('groq_auth_error', { error: e instanceof Error ? e.message : 'unknown' });
-      return errorReply(MSG_DOWN);
-    }
-    log('fallback', { reason: 'exception' });
-    return respond(req.text, engine);
+    if (isAuthError(e)) return { reply: errorReply(MSG_DOWN), path: 'error', reason: groqReason(e) };
+    return { reply: respond(req.text, engine), path: 'fallback', reason: 'exception' };
   }
 }
 
@@ -82,8 +78,8 @@ export async function POST(request: NextRequest) {
   }
   const req = sanitizeRequest(parsed.data);
   try {
-    const reply = await replyFor(req, started);
-    log('reply', { mode: req.mode, kind: reply.msg.kind, ms: Date.now() - started });
+    const { reply, path, reason, task } = await replyFor(req, started);
+    log('reply', { path, reason, task, mode: req.mode, kind: reply.msg.kind, ms: Date.now() - started });
     return NextResponse.json(reply);
   } catch {
     // Mesin aturan pun gagal (seharusnya tidak terjadi) — tetap kirim body yang bisa ditampilkan UI.

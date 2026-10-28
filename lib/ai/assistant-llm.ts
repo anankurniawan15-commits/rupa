@@ -29,8 +29,28 @@ export interface AssistantDeps {
   chat: ChatFn;
   /** Sisa waktu (ms) sampai tenggat permintaan. */
   remainingMs: () => number;
-  /** Log kejadian — tanpa isi pesan pengguna. */
-  log?: (event: string, detail?: Record<string, string | number>) => void;
+}
+
+export type LlmTask = 'intent' | 'explain' | 'consult';
+/** Penyebab hasil LLM tidak dipakai — aman dicatat di log (tanpa isi pesan atau respons). */
+export type FailReason =
+  | 'no_time' | 'invalid_json' | 'invalid_schema' | 'empty_guide'
+  | 'timeout' | 'network' | 'format' | 'config' | `http_${number}` | 'unexpected';
+type LlmResult<T> = { ok: true; data: T } | { ok: false; reason: FailReason };
+
+/**
+ * Jalur yang menghasilkan jawaban (dicatat route di log server):
+ *  - llm         : semua langkah LLM yang dibutuhkan berhasil
+ *  - llm_partial : maksud dari LLM, tapi teks alasan/panduan dari mesin aturan (`task` + `reason`)
+ *  - fallback    : maksud gagal dipahami LLM → seluruh jawaban dari mesin aturan (`reason`)
+ *  - rules       : sengaja tanpa LLM (perbandingan)
+ */
+export type AnswerPath = 'llm' | 'llm_partial' | 'fallback' | 'rules';
+export interface AnswerResult {
+  reply: AssistantReply;
+  path: AnswerPath;
+  reason?: FailReason;
+  task?: LlmTask;
 }
 
 const INTENT_OPTS: ChatOptions = { json: true, temperature: 0.1, maxTokens: 200 };
@@ -52,30 +72,33 @@ const historyBlock = (history: HistoryItem[]) =>
 export const isAuthError = (e: unknown) =>
   e instanceof Error && e.name === 'GroqError' && 'status' in e && (e.status === 401 || e.status === 403);
 
-/** Panggil LLM lalu validasi JSON-nya; null untuk galat, timeout, atau keluaran tidak valid. */
-async function callJson<T>(deps: AssistantDeps, task: string, system: string, user: string, opts: ChatOptions, schema: z.ZodType<T>): Promise<T | null> {
-  const budget = deps.remainingMs();
-  if (budget < MIN_CALL_BUDGET_MS) {
-    deps.log?.('llm_skipped', { task });
-    return null;
-  }
-  try {
-    const messages: GroqMessage[] = [{ role: 'system', content: system }, { role: 'user', content: user }];
-    const parsed = schema.safeParse(parseJson(await deps.chat(messages, { ...opts, timeoutMs: budget })));
-    if (parsed.success) return parsed.data;
-    deps.log?.('llm_invalid', { task });
-  } catch (e) {
-    if (isAuthError(e)) throw e;
-    // GroqError hanya berisi jenis + status HTTP; galat lain tidak dicatat isinya.
-    deps.log?.('llm_error', { task, error: e instanceof Error && e.name === 'GroqError' ? e.message : 'unexpected' });
-  }
-  return null;
+/** GroqError → alasan singkat (jenis + status HTTP saja); galat lain tidak dicatat isinya. */
+export function groqReason(e: unknown): FailReason {
+  if (!(e instanceof Error) || e.name !== 'GroqError' || !('kind' in e)) return 'unexpected';
+  if (e.kind === 'http' && 'status' in e && typeof e.status === 'number') return `http_${e.status}`;
+  return e.kind === 'timeout' || e.kind === 'network' || e.kind === 'format' || e.kind === 'config' ? e.kind : 'unexpected';
 }
 
-/** Klasifikasi maksud + ekstraksi kriteria. null → pakai regex mesin aturan. */
-export function parseIntent(text: string, mode: ChatMode, history: HistoryItem[], deps: AssistantDeps): Promise<Intent | null> {
+/** Panggil LLM lalu validasi JSON-nya. Gagal → alasan (timeout, JSON rusak, …), bukan exception. */
+async function callJson<T>(deps: AssistantDeps, system: string, user: string, opts: ChatOptions, schema: z.ZodType<T>): Promise<LlmResult<T>> {
+  const budget = deps.remainingMs();
+  if (budget < MIN_CALL_BUDGET_MS) return { ok: false, reason: 'no_time' };
+  try {
+    const messages: GroqMessage[] = [{ role: 'system', content: system }, { role: 'user', content: user }];
+    const json = parseJson(await deps.chat(messages, { ...opts, timeoutMs: budget }));
+    if (json === undefined) return { ok: false, reason: 'invalid_json' };
+    const parsed = schema.safeParse(json);
+    return parsed.success ? { ok: true, data: parsed.data } : { ok: false, reason: 'invalid_schema' };
+  } catch (e) {
+    if (isAuthError(e)) throw e;
+    return { ok: false, reason: groqReason(e) };
+  }
+}
+
+/** Klasifikasi maksud + ekstraksi kriteria. Gagal → jawaban dari mesin aturan. */
+export function parseIntent(text: string, mode: ChatMode, history: HistoryItem[], deps: AssistantDeps): Promise<LlmResult<Intent>> {
   const user = historyBlock(history) + '<mode>' + mode + '</mode><pesan_pengguna>' + asData(text) + '</pesan_pengguna>';
-  return callJson(deps, 'intent', INTENT_PROMPT, user, INTENT_OPTS, IntentSchema);
+  return callJson(deps, INTENT_PROMPT, user, INTENT_OPTS, IntentSchema);
 }
 
 const matchTypes = (xs: string[]) => TYPERX.filter(([re, , w]) => xs.some((x) => x === w || re.test(x.toLowerCase())));
@@ -111,13 +134,13 @@ export function mergeFlags(flags: ShopFlags, intent: Intent): ShopFlags {
   return { ...flags, cheaper, other, refine: flags.refine || cheaper || other };
 }
 
-/** Alasan "kenapa cocok" ditulis LLM; null → alasan mesin aturan. */
-export async function explain(picks: Product[], crit: ShopCriteria, uses: string[], text: string, deps: AssistantDeps) {
+/** Alasan "kenapa cocok" ditulis LLM; gagal → alasan mesin aturan. */
+export async function explain(picks: Product[], crit: ShopCriteria, uses: string[], text: string, deps: AssistantDeps): Promise<LlmResult<ReturnType<typeof sanitizeExplain>>> {
   const kriteria = { jenis: crit.words, material: crit.mats.map((m) => MATERIALS[m]), kegunaan: uses, hadiah: crit.gift };
   const produk = picks.map((p) => ({ id: p.id, judul: p.title, material: p.matShort, asal: p.originShort, kegunaan: p.uses, harga: rp(p.price), rating: r1(p.rating) }));
   const user = '<pesan_pengguna>' + asData(text) + '</pesan_pengguna>\n<kriteria>' + asData(kriteria) + '</kriteria>\n<data_produk>' + asData(produk) + '</data_produk>';
-  const out = await callJson(deps, 'explain', EXPLAIN_PROMPT, user, EXPLAIN_OPTS, ExplainSchema);
-  return out ? sanitizeExplain(out, picks.map((p) => p.id)) : null;
+  const out = await callJson(deps, EXPLAIN_PROMPT, user, EXPLAIN_OPTS, ExplainSchema);
+  return out.ok ? { ok: true, data: sanitizeExplain(out.data, picks.map((p) => p.id)) } : out;
 }
 
 /** Baris harga selalu dari katalog, lalu alasan LLM; produk tanpa alasan LLM yang lolos memakai alasan aturan. */
@@ -128,49 +151,51 @@ function combineReasons(picks: Product[], crit: ShopCriteria, relaxed: boolean, 
   return reasons;
 }
 
-async function shopLLM(req: AssistantRequest, intent: Intent, deps: AssistantDeps): Promise<AssistantReply> {
+async function shopLLM(req: AssistantRequest, intent: Intent, deps: AssistantDeps): Promise<AnswerResult> {
   const t = req.text.toLowerCase();
   const ctx = req.ctx;
   const flags = mergeFlags(extractFlags(t), intent);
+  const done = (reply: AssistantReply): AnswerResult => ({ reply, path: 'llm' });
   const raw = intentToCriteria(intent, t, flags.refine);
-  if (!raw) return noMatchReply(mergeCriteria(extractCriteria(t), ctx, flags), flags);
+  if (!raw) return done(noMatchReply(mergeCriteria(extractCriteria(t), ctx, flags), flags));
   const crit = mergeCriteria(raw, ctx, flags);
   const clarify = clarifyReply(crit, flags, raw.gift || ctx.awaiting === 'gift');
-  if (clarify) return clarify;
+  if (clarify) return done(clarify);
   const { list, relaxed } = searchCatalog(crit, searchOptions(ctx, flags, req.hidden, intent.uses));
   const picks = list.slice(0, MAX_PICKS);
-  if (!picks.length) return noMatchReply(crit, flags);
+  if (!picks.length) return done(noMatchReply(crit, flags));
   const llm = await explain(picks, crit, intent.uses, req.text, deps);
-  if (!llm) return productsReply(picks, crit, ctx, flags, relaxed);
-  const reasons = combineReasons(picks, crit, relaxed, flags.cheaper, llm.reasons);
+  if (!llm.ok) return { reply: productsReply(picks, crit, ctx, flags, relaxed), path: 'llm_partial', task: 'explain', reason: llm.reason };
+  const reasons = combineReasons(picks, crit, relaxed, flags.cheaper, llm.data.reasons);
   // Saat budget dilonggarkan, kalimat pembuka aturan (jujur soal budget) dipertahankan.
-  return productsReply(picks, crit, ctx, flags, relaxed, { reasons, paras: llm.intro && !relaxed ? [llm.intro] : undefined });
+  return done(productsReply(picks, crit, ctx, flags, relaxed, { reasons, paras: llm.data.intro && !relaxed ? [llm.data.intro] : undefined }));
 }
 
-/** Panduan upcycle dari LLM (kind 'guide'); null → panduan mesin aturan. */
-export async function consultLLM(text: string, history: HistoryItem[], deps: AssistantDeps): Promise<AiMessage | null> {
+/** Panduan upcycle dari LLM (kind 'guide'); gagal → panduan mesin aturan. */
+export async function consultLLM(text: string, history: HistoryItem[], deps: AssistantDeps): Promise<LlmResult<AiMessage>> {
   const user = historyBlock(history) + '<pesan_pengguna>' + asData(text) + '</pesan_pengguna>';
-  const out = await callJson(deps, 'consult', CONSULT_PROMPT, user, CONSULT_OPTS, GuideSchema);
-  if (!out) return null;
-  const guide = sanitizeGuide(out);
-  if (!guide.title || !guide.ideas.length) return null;
-  return { role: 'ai', kind: 'guide', title: guide.title, paras: guide.paras, ideas: guide.ideas, safety: ensureSafety(text, guide), chips: consult(text.toLowerCase()).chips };
+  const out = await callJson(deps, CONSULT_PROMPT, user, CONSULT_OPTS, GuideSchema);
+  if (!out.ok) return out;
+  const guide = sanitizeGuide(out.data);
+  if (!guide.title || !guide.ideas.length) return { ok: false, reason: 'empty_guide' };
+  const msg: AiMessage = { role: 'ai', kind: 'guide', title: guide.title, paras: guide.paras, ideas: guide.ideas, safety: ensureSafety(text, guide), chips: consult(text.toLowerCase()).chips };
+  return { ok: true, data: msg };
 }
 
-/** Jawab satu pesan. Masukan harus sudah divalidasi dan disanitasi (sanitizeRequest). */
-export async function answer(req: AssistantRequest, deps: AssistantDeps): Promise<AssistantReply> {
+/** Jawab satu pesan + jalur yang dipakai. Masukan harus sudah divalidasi dan disanitasi (sanitizeRequest). */
+export async function answer(req: AssistantRequest, deps: AssistantDeps): Promise<AnswerResult> {
   const t = req.text.toLowerCase();
   const engine: EngineInput = { mode: req.mode, ctx: req.ctx, compare: req.compare, hidden: req.hidden };
-  if (COMPARE_RE.test(t)) return compareResp(engine);
+  if (COMPARE_RE.test(t)) return { reply: compareResp(engine), path: 'rules' };
   const intent = await parseIntent(req.text, req.mode, req.history, deps);
-  if (!intent) {
-    deps.log?.('fallback', { reason: 'intent' });
-    return respond(req.text, engine);
+  if (!intent.ok) return { reply: respond(req.text, engine), path: 'fallback', task: 'intent', reason: intent.reason };
+  const kind = intent.data.intent;
+  if (kind === 'compare') return { reply: compareResp(engine), path: 'llm' };
+  if (kind === 'offtopic') return { reply: { msg: structuredClone(OFFTOPIC_REPLY) }, path: 'llm' };
+  if (kind === 'consult' || (kind === 'clarify' && req.mode === 'upcycle')) {
+    const guide = await consultLLM(req.text, req.history, deps);
+    if (guide.ok) return { reply: { msg: guide.data }, path: 'llm' };
+    return { reply: { msg: consult(t) }, path: 'llm_partial', task: 'consult', reason: guide.reason };
   }
-  if (intent.intent === 'compare') return compareResp(engine);
-  if (intent.intent === 'offtopic') return { msg: structuredClone(OFFTOPIC_REPLY) };
-  if (intent.intent === 'consult' || (intent.intent === 'clarify' && req.mode === 'upcycle')) {
-    return { msg: (await consultLLM(req.text, req.history, deps)) || consult(t) };
-  }
-  return shopLLM(req, intent, deps);
+  return shopLLM(req, intent.data, deps);
 }
