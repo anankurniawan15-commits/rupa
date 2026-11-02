@@ -126,7 +126,7 @@ Setiap kali `.env.local` dibuat atau diubah, matikan server (Ctrl+C) lalu jalank
 > - `.env.local` sudah diabaikan Git (aturan `.env*` di `.gitignore`). Jangan mengubah aturan itu dan jangan pakai `git add .` atau `git add -A`; sebutkan nama file satu per satu.
 > - Jangan beri awalan `NEXT_PUBLIC_`, karena variabel dengan awalan itu ikut terkirim ke browser.
 > - Kalau key sempat ter-commit, terkirim ke chat, atau terlihat di screenshot, hapus key itu di console.groq.com lalu buat yang baru.
-> - Setiap anggota tim memakai key sendiri.
+> - Setiap pengembang sebaiknya memakai key sendiri, karena batas kuota Groq berlaku per akun.
 
 #### Cara kerja
 
@@ -186,13 +186,13 @@ Setiap jawaban mencetak satu baris di terminal `npm run dev`. Isi pesan pengguna
 | `timeout`, `network` | Groq lambat atau koneksi gagal | Coba lagi; cek koneksi internet |
 | `invalid_json`, `invalid_schema`, `empty_guide` | Keluaran LLM tidak bisa dipakai | Biasanya sesekali saja; kalau sering, periksa prompt |
 | `no_time` | Sisa waktu tidak cukup untuk memanggil LLM lagi | Wajar sesekali; jawaban tetap dalam batas 10 dtk |
-| `exception`, `unexpected` | Galat di kode | Laporkan ke pemegang fitur beserta langkah untuk mengulanginya |
+| `exception`, `unexpected` | Galat di kode | Buka issue di repo ini beserta langkah untuk mengulanginya |
 
 #### File
 
 | File | Isi |
 |---|---|
-| `lib/clients/groq.ts` | `chat()` ke Groq (server-only): timeout, coba ulang, `reasoning_effort: 'low'` untuk model gpt-oss. `vision()` masih stub (milik AI Sortir) |
+| `lib/clients/groq.ts` | `chat()` ke Groq (server-only): timeout, coba ulang, `reasoning_effort: 'low'` untuk model gpt-oss. `vision()` untuk fitur AI Sortir belum diimplementasikan |
 | `lib/ai/assistant-llm.ts` | Alur LLM: `parseIntent`, `explain`, `consultLLM`, `answer()` |
 | `lib/ai/assistant-prompts.ts` | System prompt per tugas dan `ASSISTANT_PROMPT_VERSION` |
 | `lib/ai/assistant-schema.ts` | Skema zod input/keluaran, penyaring teks LLM, `ensureSafety`, batas `MAX_TEXT` (500 karakter) dan `MAX_HISTORY` (8 pesan) |
@@ -240,14 +240,14 @@ Ada jeda 15 detik antar giliran (atur dengan `ASSISTANT_EVAL_GAP_MS`) supaya tid
 
 #### Batasan
 
-- **Kuota gratis Groq kecil**: sekitar 8.000 token per menit untuk semua pengguna, kira-kira 3 pertanyaan belanja per menit. Lewat dari itu jawaban datang dari mesin aturan (`reason: http_429`). Untuk demo di kelas, beri jeda antar pertanyaan.
-- **Endpoint terbuka untuk tamu.** Laporan perancangan menetapkan `POST /api/assistant` hanya untuk pengguna yang masuk, tetapi autentikasi masih mock. `TODO(Supabase)`: wajibkan sesi setelah Supabase Auth tersambung.
-- **Rate limit di memori satu instans** dan IP dibaca dari `x-forwarded-for`, jadi hanya cocok untuk demo.
+- **Kuota gratis Groq kecil**: sekitar 8.000 token per menit untuk semua pengguna, kira-kira 3 pertanyaan belanja per menit. Lewat dari itu jawaban datang dari mesin aturan (`reason: http_429`). Untuk lalu lintas lebih tinggi diperlukan paket berbayar Groq.
+- **Endpoint terbuka untuk tamu.** Rancangan sistem mensyaratkan pengguna masuk dulu, tetapi autentikasi di repo ini masih mock sehingga `POST /api/assistant` belum memeriksa sesi. `TODO(Supabase)`: wajibkan sesi setelah Supabase Auth tersambung.
+- **Rate limit di memori satu instans** dan IP dibaca dari `x-forwarded-for`, jadi belum siap untuk produksi atau deployment dengan banyak instans.
 - **Data masih contoh.** Katalog dari `products.json`, daftar `hidden` dikirim dari browser, dan riwayat chat disimpan di `localStorage`. `TODO(Supabase)` ada di `searchCatalog`, `route.ts`, dan `assistant.service.ts`.
 - **Penyaring angka sengaja ketat**: alasan dari LLM yang memuat angka (misalnya "muat 2 buku") ikut dibuang.
 - **Tanpa LLM**, permintaan yang tidak ada di katalog (misalnya "kursi emas di bawah Rp10.000") dijawab dengan produk termurah yang paling mendekati, bukan "tidak ada".
 
-#### Untuk anggota tim lain
+#### Catatan untuk kontributor
 
 - `chat()` di `lib/clients/groq.ts` boleh dipakai untuk bantuan listing, tetapi hanya dari route handler, bukan dari komponen `'use client'`.
 - `vision()` di file yang sama belum diisi; itu bagian AI Sortir.
