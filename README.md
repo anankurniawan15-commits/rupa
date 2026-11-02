@@ -104,21 +104,153 @@ Variabel lingkungan yang nanti dibutuhkan (`.env.local`, contoh di `.env.example
 
 ### AI Assistant
 
+Chatbot Rupa ada di tombol **Tanya AI** (pojok kanan bawah) dan di halaman `/assistant`. Ada dua mode:
+
+- **Belanja dengan AI**: pengguna menulis kebutuhan ("tas di bawah Rp150.000", "kado untuk teman yang suka tanaman"), lalu chatbot menampilkan kartu produk dari katalog beserta alasan kenapa cocok.
+- **Konsultasi Upcycle**: pengguna bertanya cara mengolah barang bekas, lalu chatbot memberi ide, langkah kerja, dan catatan keamanan.
+
+> Berbeda dari fitur lain di repo ini yang masih simulasi, **AI Assistant sudah memanggil layanan AI sungguhan (Groq)** lewat route handler `POST /api/assistant`. Tanpa API key, chatbot tetap berjalan dengan mesin aturan lokal.
+
+#### Mulai cepat
+
+1. Salin contoh env:
+   - Windows (PowerShell): `copy .env.example .env.local`
+   - macOS/Linux: `cp .env.example .env.local`
+2. Buat API key gratis di [console.groq.com](https://console.groq.com) → **API Keys**, lalu isi `GROQ_API_KEY=` di `.env.local`. Baris `GROQ_CHAT_MODEL` boleh dibiarkan.
+3. Jalankan `npm run dev`. Pastikan terminal mencetak `- Environments: .env.local`, lalu catat port di baris `Local:` (bisa 3001 dan seterusnya kalau 3000 sedang dipakai).
+4. Buka **Tanya AI** dan tanyakan "cari tas di bawah 150 ribu". Di terminal harus muncul baris log berisi `"path":"llm"`.
+
+Setiap kali `.env.local` dibuat atau diubah, matikan server (Ctrl+C) lalu jalankan `npm run dev` lagi.
+
+> **Keamanan API key**
+> - `.env.local` sudah diabaikan Git (aturan `.env*` di `.gitignore`). Jangan mengubah aturan itu dan jangan pakai `git add .` atau `git add -A`; sebutkan nama file satu per satu.
+> - Jangan beri awalan `NEXT_PUBLIC_`, karena variabel dengan awalan itu ikut terkirim ke browser.
+> - Kalau key sempat ter-commit, terkirim ke chat, atau terlihat di screenshot, hapus key itu di console.groq.com lalu buat yang baru.
+> - Setiap anggota tim memakai key sendiri.
+
+#### Cara kerja
+
 ```
-UI (ChatShell) → assistant.service (fetch + AbortController)
-  → POST /api/assistant  (rate limit 20/menit/IP → validasi zod → id dicocokkan ke katalog)
-      ├─ "bandingkan"        → compareResp (deterministik, tanpa LLM)
-      ├─ tanpa GROQ_API_KEY  → mesin aturan respond()
-      └─ Groq: parseIntent → searchCatalog (kode) → explain   |  consultLLM  |  offtopic = teks tetap
+UI (ChatShell) → assistant.service.ts (fetch + AbortController, timeout klien 12 dtk)
+  → POST /api/assistant
+      rate limit 20/menit/IP → validasi zod → id produk dicocokkan ke katalog
+      ├─ "bandingkan"        → compareResp()   (selalu tanpa LLM)
+      ├─ tanpa GROQ_API_KEY  → respond()       (mesin aturan)
+      └─ dengan key:
+           Belanja:     parseIntent (LLM) → searchCatalog (kode) → explain (LLM)
+           Konsultasi:  parseIntent (LLM) → consultLLM (LLM)
+           Di luar topik / upaya membobol prompt → teks tetap
 ```
 
-- **Produk selalu dipilih kode**, bukan LLM: `searchCatalog()` di `lib/ai/assistant-engine.ts` (stok > 0, tidak `hidden`, budget/material/jenis). LLM hanya mengklasifikasi maksud dan menulis teks alasan/panduan. Harga, rating, stok, dan penjual di kartu dibaca dari katalog; teks LLM yang memuat angka atau klaim mutlak dibuang (`lib/ai/assistant-schema.ts`).
-- **Fallback**: Groq tidak tersedia, timeout (≤ 9 dtk total), 429/5xx (dicoba ulang sekali kalau `retry-after` ≤ 2 dtk dan masih muat dalam tenggat), atau JSON tidak valid → mesin aturan. Key ditolak (401/403) → pesan galat dengan tombol "Coba lagi". Penyebab hanya dicatat di log server (tanpa isi pesan pengguna), beserta `ASSISTANT_PROMPT_VERSION`.
-- **Log per respons**: `{"event":"reply","path":…,"reason":…,"task":…}`. `path`: `llm` (semua langkah LLM berhasil), `llm_partial` (maksud dari LLM, teks dari mesin aturan), `fallback` (seluruhnya mesin aturan), `rules` (perbandingan, sengaja tanpa LLM), `error` (key ditolak). `reason` contoh: `no_key`, `timeout`, `invalid_json`, `invalid_schema`, `http_429`, `http_401`, `http_404` (model di `GROQ_CHAT_MODEL` tidak ada / sudah dimatikan Groq — cek daftar di console.groq.com/docs/models). Kalau `npm run dev` tidak mencetak `- Environments: .env.local` saat start, file itu tidak terbaca; setelah membuat/mengubah `.env.local`, restart `npm run dev`.
-- **File**: `lib/clients/groq.ts` (`chat()`, server-only), `lib/ai/assistant-llm.ts` (orkestrasi), `lib/ai/assistant-prompts.ts` (system prompt + versi), `lib/ai/assistant-schema.ts` (zod + penyaring), `lib/rate-limit.ts`, `app/api/assistant/route.ts`.
-- **Env**: `GROQ_API_KEY` (server saja, tanpa `NEXT_PUBLIC_`), `GROQ_CHAT_MODEL` (default `openai/gpt-oss-120b`; model gpt-oss dipanggil dengan `reasoning_effort: low` supaya cepat). Tanpa key, chatbot tetap jalan dengan mesin aturan.
-- **Uji**: `npm run test:unit` (LLM dipalsukan), `npm test` (plus validasi endpoint). Evaluasi live ke Groq setelah mengubah prompt: `ASSISTANT_EVAL=1 BASE_URL=http://localhost:3000 npx playwright test --project=api eval` (kasus di `tests/assistant/eval-cases.ts`; jeda 15 dtk antar-giliran, atur dengan `ASSISTANT_EVAL_GAP_MS`).
-- **Batasan demo**: paket gratis Groq untuk gpt-oss dibatasi 8K token/menit (±3 giliran belanja per menit untuk **semua** pengguna); lewat dari itu jawaban datang dari mesin aturan (`reason: http_429` di log). Rate limit di memori satu instans dan IP dibaca dari `x-forwarded-for`; `hidden` dikirim klien karena data masih mock (`TODO(Supabase)`: server membaca status listing sendiri).
+Tiga aturan utamanya:
+
+1. **Produk selalu dipilih kode, bukan LLM.** `searchCatalog()` di `lib/ai/assistant-engine.ts` menyaring katalog: stok > 0, bukan listing yang diturunkan admin (`hidden`), sesuai budget, material, dan jenis barang. LLM hanya memahami maksud pengguna dan menulis teks alasan atau panduan.
+2. **Angka hanya dari katalog.** Harga, rating, stok, dan penjual di kartu dibaca dari data katalog (label "Data katalog"). Teks dari LLM (label "Saran AI") divalidasi dengan zod lalu disaring di `lib/ai/assistant-schema.ts`: id produk di luar daftar terpilih, kalimat yang memuat angka, dan klaim mutlak dibuang.
+3. **Selalu ada jawaban.** Kalau langkah LLM gagal, jawaban diambil dari mesin aturan lokal. Panduan konsultasi selalu diberi catatan keamanan yang relevan (`ensureSafety`).
+
+#### Kapan chatbot memakai mesin aturan
+
+| Kondisi | Yang terjadi |
+|---|---|
+| `GROQ_API_KEY` kosong | Seluruh jawaban dari mesin aturan |
+| Groq lambat (batas 9 dtk per permintaan) | Mesin aturan |
+| Groq membalas 429 atau 5xx | Coba ulang sekali kalau `retry-after` ≤ 2 dtk dan waktu masih cukup; kalau tidak, mesin aturan |
+| JSON dari LLM rusak atau tidak sesuai skema | Mesin aturan |
+| Model tidak ditemukan (404) | Mesin aturan |
+| Key ditolak (401/403) | **Pesan galat** dengan tombol "Coba lagi", supaya salah konfigurasi terlihat |
+
+#### Membaca log server
+
+Setiap jawaban mencetak satu baris di terminal `npm run dev`. Isi pesan pengguna, isi respons Groq, dan API key tidak pernah dicatat.
+
+```json
+{"scope":"assistant","v":"2","event":"reply","path":"fallback","reason":"no_key","mode":"shop","kind":"products","ms":6}
+```
+
+`v` adalah versi prompt (`ASSISTANT_PROMPT_VERSION`), `ms` adalah lama proses di server.
+
+| `path` | Artinya |
+|---|---|
+| `llm` | Semua langkah LLM berhasil |
+| `llm_partial` | Maksud dipahami LLM, tetapi teks alasan/panduan dari mesin aturan |
+| `fallback` | Seluruh jawaban dari mesin aturan (lihat `reason`) |
+| `rules` | Perbandingan produk, memang selalu tanpa LLM |
+| `error` | Key ditolak Groq |
+
+| `reason` | Artinya | Yang perlu dilakukan |
+|---|---|---|
+| `no_key` | `GROQ_API_KEY` tidak terbaca | Cek nama file (`.env.local`, bukan `.env.local.txt`), isinya, lalu restart `npm run dev` |
+| `http_401` / `http_403` | Key salah atau sudah dicabut | Buat key baru di console.groq.com |
+| `http_404` | Model di `GROQ_CHAT_MODEL` tidak ada atau sudah dimatikan Groq | Pilih model yang ada di [console.groq.com/docs/models](https://console.groq.com/docs/models) |
+| `http_429` | Kuota token per menit habis | Tunggu sebentar, beri jeda antar pertanyaan |
+| `timeout`, `network` | Groq lambat atau koneksi gagal | Coba lagi; cek koneksi internet |
+| `invalid_json`, `invalid_schema`, `empty_guide` | Keluaran LLM tidak bisa dipakai | Biasanya sesekali saja; kalau sering, periksa prompt |
+| `no_time` | Sisa waktu tidak cukup untuk memanggil LLM lagi | Wajar sesekali; jawaban tetap dalam batas 10 dtk |
+| `exception`, `unexpected` | Galat di kode | Laporkan ke pemegang fitur beserta langkah untuk mengulanginya |
+
+#### File
+
+| File | Isi |
+|---|---|
+| `lib/clients/groq.ts` | `chat()` ke Groq (server-only): timeout, coba ulang, `reasoning_effort: 'low'` untuk model gpt-oss. `vision()` masih stub (milik AI Sortir) |
+| `lib/ai/assistant-llm.ts` | Alur LLM: `parseIntent`, `explain`, `consultLLM`, `answer()` |
+| `lib/ai/assistant-prompts.ts` | System prompt per tugas dan `ASSISTANT_PROMPT_VERSION` |
+| `lib/ai/assistant-schema.ts` | Skema zod input/keluaran, penyaring teks LLM, `ensureSafety`, batas `MAX_TEXT` (500 karakter) dan `MAX_HISTORY` (8 pesan) |
+| `lib/ai/assistant-engine.ts` | Mesin aturan dan `searchCatalog()` (dipakai jalur LLM juga) |
+| `app/api/assistant/route.ts` | Route handler: rate limit, validasi, log, batas waktu 9 dtk |
+| `lib/rate-limit.ts` | Rate limit sederhana di memori |
+| `lib/services/assistant.service.ts` | Pemanggil dari UI: pembatalan permintaan, pesan galat dan "Coba lagi" |
+| `tests/assistant/` | Uji unit, uji endpoint, dan kasus evaluasi live (`eval-cases.ts`) |
+
+#### Konfigurasi
+
+| Variabel | Wajib | Keterangan |
+|---|---|---|
+| `GROQ_API_KEY` | Untuk jalur LLM | Hanya dibaca di server |
+| `GROQ_CHAT_MODEL` | Tidak | Default `openai/gpt-oss-120b`. `llama-3.3-70b-versatile` sudah dimatikan Groq sejak 16 Agustus 2026 |
+
+#### Pengujian
+
+| Perintah | Kegunaan |
+|---|---|
+| `npm run test:unit` | Uji fungsi murni; LLM dipalsukan, tanpa server dan tanpa Groq |
+| `npm test` | Uji unit + validasi endpoint `POST /api/assistant` (tetap tanpa Groq) |
+| Evaluasi live (lihat di bawah) | 7 skenario ke Groq sungguhan; dipakai setelah mengubah prompt |
+
+Evaluasi live butuh `npm run dev` yang sudah jalan dengan key di `.env.local`. Ganti `3000` dengan port server.
+
+```powershell
+# Windows (PowerShell)
+$env:ASSISTANT_EVAL="1"; $env:BASE_URL="http://localhost:3000"; npx playwright test --project=api eval
+```
+
+```bash
+# macOS/Linux
+ASSISTANT_EVAL=1 BASE_URL=http://localhost:3000 npx playwright test --project=api eval
+```
+
+Ada jeda 15 detik antar giliran (atur dengan `ASSISTANT_EVAL_GAP_MS`) supaya tidak kena batas token per menit, jadi satu putaran sekitar 3 menit. Setiap putaran memakai kuota Groq.
+
+#### Mengubah prompt
+
+1. Ubah prompt di `lib/ai/assistant-prompts.ts`.
+2. Naikkan `ASSISTANT_PROMPT_VERSION` (misalnya `'2'` → `'3'`), supaya log bisa membedakan versi lama dan baru.
+3. Jalankan `npm run test:unit`, lalu evaluasi live.
+4. Bandingkan hasilnya dengan versi sebelumnya sebelum di-commit.
+
+#### Batasan
+
+- **Kuota gratis Groq kecil**: sekitar 8.000 token per menit untuk semua pengguna, kira-kira 3 pertanyaan belanja per menit. Lewat dari itu jawaban datang dari mesin aturan (`reason: http_429`). Untuk demo di kelas, beri jeda antar pertanyaan.
+- **Endpoint terbuka untuk tamu.** Laporan perancangan menetapkan `POST /api/assistant` hanya untuk pengguna yang masuk, tetapi autentikasi masih mock. `TODO(Supabase)`: wajibkan sesi setelah Supabase Auth tersambung.
+- **Rate limit di memori satu instans** dan IP dibaca dari `x-forwarded-for`, jadi hanya cocok untuk demo.
+- **Data masih contoh.** Katalog dari `products.json`, daftar `hidden` dikirim dari browser, dan riwayat chat disimpan di `localStorage`. `TODO(Supabase)` ada di `searchCatalog`, `route.ts`, dan `assistant.service.ts`.
+- **Penyaring angka sengaja ketat**: alasan dari LLM yang memuat angka (misalnya "muat 2 buku") ikut dibuang.
+- **Tanpa LLM**, permintaan yang tidak ada di katalog (misalnya "kursi emas di bawah Rp10.000") dijawab dengan produk termurah yang paling mendekati, bukan "tidak ada".
+
+#### Untuk anggota tim lain
+
+- `chat()` di `lib/clients/groq.ts` boleh dipakai untuk bantuan listing, tetapi hanya dari route handler, bukan dari komponen `'use client'`.
+- `vision()` di file yang sama belum diisi; itu bagian AI Sortir.
 
 ## Catatan keamanan mock
 
