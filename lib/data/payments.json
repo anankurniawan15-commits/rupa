@@ -1,0 +1,48 @@
+{
+  "banks": [
+    "BCA",
+    "BNI",
+    "BRI",
+    "Mandiri",
+    "Permata"
+  ],
+  "wallets": [
+    "GoPay",
+    "OVO",
+    "DANA",
+    "ShopeePay"
+  ],
+  "vaPrefix": {
+    "BCA": "39358",
+    "BNI": "8241",
+    "BRI": "26215",
+    "Mandiri": "89608",
+    "Permata": "8625"
+  },
+  "deadlines": {
+    "va": "24 jam",
+    "qris": "30 menit",
+    "ewallet": "30 menit"
+  },
+  "codRule": "COD hanya untuk pesanan dari satu penjual",
+  "guides": {
+    "mbank": [
+      "Buka aplikasi m-banking {bank} dan masuk ke akunmu.",
+      "Pilih menu Transfer, lalu Virtual Account.",
+      "Masukkan nomor virtual account di atas.",
+      "Periksa nama “Rupa” dan jumlah tagihan, lalu konfirmasi dengan PIN."
+    ],
+    "atm": [
+      "Masukkan kartu ATM {bank} dan PIN.",
+      "Pilih Transaksi Lainnya, lalu Transfer, lalu Virtual Account.",
+      "Masukkan nomor virtual account, lalu tekan Benar.",
+      "Periksa detail tagihan, lalu konfirmasi pembayaran."
+    ],
+    "ib": [
+      "Masuk ke internet banking {bank}.",
+      "Pilih Transfer Dana, lalu Virtual Account.",
+      "Masukkan nomor virtual account dan periksa jumlah tagihan.",
+      "Konfirmasi dengan token atau kode OTP."
+    ]
+  }
+}

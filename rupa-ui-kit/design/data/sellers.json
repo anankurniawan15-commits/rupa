@@ -1,0 +1,74 @@
+{
+  "laras": {
+    "name": "Rumah Jahit Laras",
+    "city": "Yogyakarta",
+    "rating": 4.9,
+    "nrev": 212,
+    "initials": "RL",
+    "resp": "± 1 jam",
+    "accepts": "denim, kanvas, dan kain katun"
+  },
+  "benang": {
+    "name": "Benang Kedua",
+    "city": "Bandung",
+    "rating": 4.8,
+    "nrev": 148,
+    "initials": "BK",
+    "resp": "± 2 jam",
+    "accepts": "jaket dan celana denim"
+  },
+  "tambal": {
+    "name": "Studio Tambal",
+    "city": "Jakarta Selatan",
+    "rating": 4.7,
+    "nrev": 96,
+    "initials": "ST",
+    "resp": "± 3 jam",
+    "accepts": "corduroy, flanel, dan perca"
+  },
+  "arsip": {
+    "name": "Arsip Ulang",
+    "city": "Surabaya",
+    "rating": 4.6,
+    "nrev": 61,
+    "initials": "AU",
+    "resp": "± 5 jam",
+    "accepts": "pakaian kargo, strap, dan ring logam"
+  },
+  "kayu": {
+    "name": "Kayu Pulang",
+    "city": "Jepara",
+    "rating": 4.9,
+    "nrev": 174,
+    "initials": "KP",
+    "resp": "± 1 jam",
+    "accepts": "kayu solid, kusen, dan palet"
+  },
+  "plastik": {
+    "name": "Lapak Cacah",
+    "city": "Bekasi",
+    "rating": 4.5,
+    "nrev": 39,
+    "initials": "LC",
+    "resp": "± 4 jam",
+    "accepts": "tutup botol HDPE yang bersih"
+  },
+  "karet": {
+    "name": "Karet Kedua",
+    "city": "Malang",
+    "rating": 4.4,
+    "nrev": 22,
+    "initials": "KK",
+    "resp": "± 6 jam",
+    "accepts": "ban dalam bekas"
+  },
+  "kaleng": {
+    "name": "Kebun Kaleng",
+    "city": "Depok",
+    "rating": 4.7,
+    "nrev": 58,
+    "initials": "KB",
+    "resp": "± 2 jam",
+    "accepts": "kaleng cat dan kaleng biskuit"
+  }
+}

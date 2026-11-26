@@ -1,0 +1,374 @@
+{
+  "samples": {
+    "jeans": {
+      "label": "Celana jeans lama",
+      "note": "Keyakinan tinggi",
+      "img": "/products/tote-saku-denim-detail.jpg"
+    },
+    "bottle": {
+      "label": "Botol plastik",
+      "note": "Ada peringatan keamanan",
+      "ph": "plastic"
+    },
+    "chair": {
+      "label": "Kursi kayu retak",
+      "note": "Perlu diperbaiki dulu",
+      "ph": "wood"
+    },
+    "blurry": {
+      "label": "Foto kurang jelas",
+      "note": "Keyakinan rendah",
+      "img": "/products/celana-kargo-strap-detail.jpg",
+      "blur": true
+    },
+    "screen": {
+      "label": "Tangkapan layar",
+      "note": "Tidak didukung",
+      "ph": "screen"
+    },
+    "error": {
+      "label": "Koneksi terputus",
+      "note": "Simulasi error",
+      "img": "/products/tote-saku-denim-detail.jpg"
+    }
+  },
+  "scenarios": {
+    "jeans": {
+      "item": "celana jeans ini",
+      "cat": "Tekstil",
+      "catLabel": "Tekstil — denim",
+      "sub": "Kain kepar tebal berwarna biru, kemungkinan bagian dari celana jeans.",
+      "comp": "Kemungkinan katun atau campuran katun-elastan. Cek label di pinggang untuk memastikan.",
+      "cond": [
+        "Warna pudar merata",
+        "Jahitan saku terlihat utuh",
+        "Tidak tampak robekan besar pada area yang terfoto"
+      ],
+      "reuse": "Upcycle tekstil · jual sebagai bahan",
+      "conf": 84,
+      "confLabel": "Tinggi untuk kategori, sedang untuk komposisi",
+      "confNote": "Kategori material mudah dikenali dari tekstur kain. Persentase serat tidak bisa dipastikan dari foto.",
+      "warnings": [],
+      "mat": "denim",
+      "rec": "diy",
+      "actions": {
+        "diy": [
+          "rec",
+          "Denim tebal mudah dijahit ulang menjadi tas, pouch, atau tambalan."
+        ],
+        "repair": [
+          "",
+          "Kalau masih muat dan hanya pudar, cukup dipakai lagi atau ditambal di bagian yang menipis."
+        ],
+        "sell": [
+          "",
+          "Potongan denim dicari kreator untuk patchwork. Cocok kalau kamu tidak sempat menjahit."
+        ],
+        "creator": [
+          "",
+          "Beberapa kreator di Rupa menerima denim bekas yang sudah dicuci."
+        ],
+        "recycle": [
+          "",
+          "Pilihan terakhir bila kain sudah sangat rusak. Cari titik pengumpulan tekstil — jangan dibakar."
+        ]
+      },
+      "ideas": [
+        {
+          "name": "Tote saku jeans",
+          "out": "Tas jinjing dengan saku asli celana sebagai saku luar.",
+          "diff": "Mudah",
+          "diffN": 1,
+          "tools": "Mesin jahit atau jarum tangan, benang tebal, kanvas sisa 50 × 90 cm",
+          "cost": "Rp20.000–Rp40.000",
+          "time": "2–3 jam",
+          "steps": [
+            "Lepas saku belakang dengan pendedel, sisakan 1 cm kain di sekelilingnya.",
+            "Potong kanvas dua lembar 38 × 42 cm dan dua tali 6 × 62 cm.",
+            "Jahit saku ke panel depan, satukan kedua panel, lalu pasang tali dengan jahitan kotak."
+          ],
+          "rel": "p1"
+        },
+        {
+          "name": "Pouch alat tulis",
+          "out": "Pouch ritsleting dari bagian kaki celana.",
+          "diff": "Sedang",
+          "diffN": 2,
+          "tools": "Ritsleting 20 cm, kain furing, mesin jahit",
+          "cost": "Rp10.000–Rp25.000",
+          "time": "1–2 jam",
+          "steps": [
+            "Potong dua persegi panjang 22 × 14 cm dari bagian kaki yang masih kuat.",
+            "Jahit ritsleting di sisi atas bersama furing.",
+            "Jahit keliling, balik, lalu rapikan sudutnya."
+          ],
+          "rel": "p8"
+        },
+        {
+          "name": "Panel patchwork",
+          "out": "Lembaran patchwork untuk tas atau sarung bantal.",
+          "diff": "Sedang",
+          "diffN": 2,
+          "tools": "Penggaris jahit, gunting kain, mesin jahit",
+          "cost": "Rp0–Rp15.000",
+          "time": "3–4 jam",
+          "steps": [
+            "Potong kain menjadi kotak 10 × 10 cm, kelompokkan per warna.",
+            "Susun pola terang–gelap sebelum dijahit.",
+            "Jahit per baris, setrika kampuhnya, lalu satukan semua baris."
+          ],
+          "rel": "p2"
+        }
+      ],
+      "similar": [
+        "p1",
+        "p2",
+        "p5"
+      ],
+      "creators": [
+        "laras",
+        "benang",
+        "arsip"
+      ],
+      "sellMat": "Celana jeans bekas, sudah dicuci",
+      "sellDraft": "Celana jeans bekas, warna biru pudar merata, jahitan saku masih utuh. Cocok sebagai bahan patchwork atau tas.",
+      "tags": [
+        "denim bekas",
+        "katun"
+      ]
+    },
+    "bottle": {
+      "item": "botol plastik ini",
+      "cat": "Plastik",
+      "catLabel": "Plastik — wadah minuman",
+      "sub": "Botol bening dengan tutup, kemungkinan bekas air minum kemasan.",
+      "comp": "Kemungkinan PET (botol) dan PP/HDPE (tutup). Lihat kode segitiga di dasar botol.",
+      "cond": [
+        "Bening, tanpa retakan yang terlihat",
+        "Label masih menempel",
+        "Kebersihan bagian dalam tidak bisa dipastikan dari foto"
+      ],
+      "reuse": "Pakai ulang non-makanan · daur ulang",
+      "conf": 74,
+      "confLabel": "Sedang",
+      "confNote": "Jenis plastik sering mirip secara visual. Kode daur ulang di kemasan lebih bisa dipercaya daripada foto.",
+      "warnings": [
+        "Jangan memakai ulang botol sekali pakai untuk minuman panas atau berulang kali untuk makanan.",
+        "Jangan melelehkan atau membakar plastik di rumah — asapnya berbahaya."
+      ],
+      "mat": "plastik",
+      "rec": "recycle",
+      "actions": {
+        "diy": [
+          "",
+          "Bisa jadi pot semai atau sekat laci. Hasilnya sederhana, jadi nilai jualnya rendah."
+        ],
+        "repair": [
+          "",
+          "Botol yang masih utuh bisa dipakai ulang sebagai wadah non-makanan, misalnya air untuk menyiram tanaman."
+        ],
+        "sell": [
+          "",
+          "Satu-dua botol jarang dibutuhkan pembeli. Kumpulkan dulu dalam jumlah banyak."
+        ],
+        "creator": [
+          "",
+          "Kreator plastik cacah biasanya meminta tutup botol HDPE yang sudah dipilah dan bersih."
+        ],
+        "recycle": [
+          "rec",
+          "Lepas tutup dan label, bilas, lalu setor ke bank sampah atau titik pengumpulan terdekat."
+        ]
+      },
+      "ideas": [
+        {
+          "name": "Pot semai gantung",
+          "out": "Pot kecil untuk bibit dari potongan botol.",
+          "diff": "Mudah",
+          "diffN": 1,
+          "tools": "Gunting, paku yang dipanaskan untuk lubang (oleh orang dewasa), tali",
+          "cost": "Rp0–Rp10.000",
+          "time": "30 menit",
+          "steps": [
+            "Potong botol sepertiga dari bawah.",
+            "Buat 3–4 lubang drainase dengan hati-hati.",
+            "Isi media tanam, lalu gantung dengan tali."
+          ],
+          "rel": "p11"
+        },
+        {
+          "name": "Sekat laci",
+          "out": "Sekat laci dari bagian bawah botol.",
+          "diff": "Mudah",
+          "diffN": 1,
+          "tools": "Gunting, amplas halus",
+          "cost": "Rp0",
+          "time": "20 menit",
+          "steps": [
+            "Potong bagian bawah botol setinggi 6 cm.",
+            "Haluskan tepi potongan dengan amplas.",
+            "Susun di laci untuk klip, karet, atau kabel kecil."
+          ],
+          "rel": "p7"
+        },
+        {
+          "name": "Setor tutup ke kreator",
+          "out": "Tutup botol menjadi bahan organizer cetak.",
+          "diff": "Mudah",
+          "diffN": 1,
+          "tools": "Kantong terpisah per warna",
+          "cost": "Rp0",
+          "time": "15 menit",
+          "steps": [
+            "Lepas tutup dan pisahkan per warna.",
+            "Cuci dan keringkan.",
+            "Hubungi kreator yang menerima tutup botol HDPE."
+          ],
+          "rel": "p7"
+        }
+      ],
+      "similar": [
+        "p7",
+        "p10",
+        "p11"
+      ],
+      "creators": [
+        "plastik",
+        "kaleng"
+      ],
+      "sellMat": "Tutup botol HDPE, dipilah per warna",
+      "sellDraft": "Kumpulan tutup botol plastik, sudah dicuci dan dipilah per warna.",
+      "tags": [
+        "plastik",
+        "HDPE"
+      ]
+    },
+    "chair": {
+      "item": "kursi kayu ini",
+      "cat": "Kayu",
+      "catLabel": "Kayu — furnitur",
+      "sub": "Kursi kayu dengan lapisan cat, retak terlihat di salah satu kaki.",
+      "comp": "Kemungkinan kayu solid dengan lapisan cat. Jenis kayu tidak bisa dipastikan dari foto.",
+      "cond": [
+        "Retak memanjang di kaki depan kanan",
+        "Cat mengelupas di sandaran",
+        "Sambungan dudukan tidak terlihat jelas"
+      ],
+      "reuse": "Perbaiki dulu · upcycle sebagian",
+      "conf": 71,
+      "confLabel": "Sedang",
+      "confNote": "Material kayu cukup jelas, tetapi kekuatan sambungan dan kedalaman retak tidak bisa dinilai dari foto.",
+      "warnings": [
+        "Kekuatan struktur tidak bisa dinilai dari foto. Jangan dipakai untuk duduk sebelum diperiksa langsung.",
+        "Cat lama bisa mengandung timbal. Gunakan masker dan ampelas secara basah saat mengupas cat."
+      ],
+      "mat": "kayu",
+      "rec": "repair",
+      "actions": {
+        "diy": [
+          "caution",
+          "Bisa dibongkar menjadi rak atau gantungan, tapi butuh alat pertukangan."
+        ],
+        "repair": [
+          "rec",
+          "Retak di kaki sering bisa dilem kayu dan diklem. Perbaiki dulu sebelum dipakai lagi."
+        ],
+        "sell": [
+          "",
+          "Kayu solid bekas kursi dicari pengrajin kecil. Sebutkan kerusakannya dengan jelas."
+        ],
+        "creator": [
+          "",
+          "Kreator kayu reklamasi kadang menerima furnitur rusak untuk diambil kayunya."
+        ],
+        "recycle": [
+          "",
+          "Kayu yang lapuk atau berjamur sebaiknya tidak dipakai di dalam rumah."
+        ]
+      },
+      "ideas": [
+        {
+          "name": "Perbaiki dan cat ulang",
+          "out": "Kursi yang sama dengan sambungan diperkuat.",
+          "diff": "Sedang",
+          "diffN": 2,
+          "tools": "Lem kayu, klem, amplas 120 dan 240, cat berbahan dasar air",
+          "cost": "Rp60.000–Rp120.000",
+          "time": "1 hari (termasuk waktu kering)",
+          "steps": [
+            "Bersihkan retak, isi dengan lem kayu, lalu klem semalaman.",
+            "Ampelas cat lama secara basah sambil memakai masker.",
+            "Cat ulang tipis dua lapis."
+          ],
+          "rel": "p6"
+        },
+        {
+          "name": "Rak dinding dari sandaran",
+          "out": "Rak kecil dengan sandaran sebagai bingkai.",
+          "diff": "Sulit",
+          "diffN": 3,
+          "tools": "Gergaji, bor, sekrup, fisher",
+          "cost": "Rp30.000–Rp70.000",
+          "time": "3–4 jam",
+          "steps": [
+            "Lepas sandaran dari dudukan.",
+            "Potong papan dudukan sebagai ambalan.",
+            "Pasang ke dinding dengan fisher sesuai beban."
+          ],
+          "rel": "p9"
+        },
+        {
+          "name": "Panel dekorasi",
+          "out": "Potongan kayu disusun menjadi hiasan dinding.",
+          "diff": "Sedang",
+          "diffN": 2,
+          "tools": "Gergaji, amplas, lem kayu",
+          "cost": "Rp20.000–Rp50.000",
+          "time": "2–3 jam",
+          "steps": [
+            "Potong bagian kayu yang masih kuat.",
+            "Ampelas, lalu susun polanya.",
+            "Lem ke papan dasar dan pasang gantungan."
+          ],
+          "rel": "p9"
+        }
+      ],
+      "similar": [
+        "p6",
+        "p9"
+      ],
+      "creators": [
+        "kayu"
+      ],
+      "sellMat": "Kursi kayu solid bekas, retak di satu kaki",
+      "sellDraft": "Kursi kayu bekas, kaki depan kanan retak, cat mengelupas di sandaran. Cocok diambil kayunya.",
+      "tags": [
+        "kayu bekas",
+        "furnitur"
+      ]
+    }
+  },
+  "actions": [
+    [
+      "diy",
+      "Upcycle sendiri"
+    ],
+    [
+      "repair",
+      "Perbaiki atau gunakan kembali"
+    ],
+    [
+      "sell",
+      "Jual sebagai bahan atau produk"
+    ],
+    [
+      "creator",
+      "Cari kreator yang menerima material"
+    ],
+    [
+      "recycle",
+      "Pertimbangkan jalur daur ulang"
+    ]
+  ],
+  "lowConfidenceThreshold": 60
+}

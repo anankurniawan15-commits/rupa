@@ -1,0 +1,36 @@
+{
+  "name": "rupa-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3000 -H 0.0.0.0",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "qa:screens": "node qa/screenshots.mjs http://localhost:3100",
+    "typecheck": "tsc --noEmit",
+    "test": "playwright test",
+    "test:unit": "playwright test --project=unit"
+  },
+  "dependencies": {
+    "@google/genai": "^3.6.1",
+    "@huggingface/transformers": "^4.3.2",
+    "lucide-react": "^1.61.0",
+    "next": "16.4.3",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "zod": "^4.6.7",
+    "zustand": "^5.0.16"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@tailwindcss/turbopack": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.3",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

@@ -1,0 +1,103 @@
+{
+  "profile": {
+    "name": "Dinda Pratiwi",
+    "email": "dinda@contoh.id",
+    "phone": "0812 3456 7890",
+    "city": "Bandung",
+    "bio": "Suka menjahit ulang pakaian lama. Jualan kecil-kecilan sejak 2025.",
+    "addresses": [
+      {
+        "id": "a1",
+        "label": "Rumah",
+        "text": "Jl. Cihampelas No. 21, Coblong, Bandung 40131",
+        "main": true
+      },
+      {
+        "id": "a2",
+        "label": "Kantor",
+        "text": "Jl. Asia Afrika No. 8, Sumur Bandung, Bandung 40111",
+        "main": false
+      }
+    ],
+    "savedAnalyses": [
+      {
+        "id": "s1",
+        "title": "Celana jeans lama — Tekstil (denim)",
+        "date": "Disimpan 12 Okt 2026",
+        "scen": "jeans"
+      }
+    ]
+  },
+  "orders": [
+    {
+      "id": "UPL-2610-0466",
+      "date": "18 Okt 2026",
+      "seller": "tambal",
+      "items": [
+        {
+          "id": "p3",
+          "qty": 1
+        }
+      ],
+      "ship": 15000,
+      "status": "menunggu",
+      "note": "Belum dibayar. Pesanan dibatalkan otomatis jika tidak dibayar sebelum batas waktu."
+    },
+    {
+      "id": "UPL-2610-0388",
+      "date": "14 Okt 2026",
+      "seller": "kayu",
+      "items": [
+        {
+          "id": "p6",
+          "qty": 1
+        }
+      ],
+      "ship": 15000,
+      "status": "dikirim",
+      "resi": "SPX-DEMO-55120"
+    },
+    {
+      "id": "UPL-2609-0301",
+      "date": "28 Sep 2026",
+      "seller": "laras",
+      "items": [
+        {
+          "id": "p8",
+          "qty": 2
+        }
+      ],
+      "ship": 15000,
+      "status": "selesai",
+      "reviewed": false
+    },
+    {
+      "id": "UPL-2609-0277",
+      "date": "21 Sep 2026",
+      "seller": "plastik",
+      "items": [
+        {
+          "id": "p7",
+          "qty": 1
+        }
+      ],
+      "ship": 15000,
+      "status": "dibatalkan",
+      "note": "Dibatalkan olehmu sebelum paket dikirim. Dana dikembalikan (simulasi)."
+    }
+  ],
+  "cart": [
+    {
+      "id": "p1",
+      "qty": 1
+    },
+    {
+      "id": "p6",
+      "qty": 1
+    }
+  ],
+  "wishlist": [
+    "p3",
+    "p6"
+  ]
+}
